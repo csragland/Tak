@@ -2,13 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Piece : MonoBehaviour
+public class PieceUI : MonoBehaviour
 {
 
-    public int type;
+    public PieceType type;
     public int player;
 
-    GameManager gameManager;
+    UI ui;
 
     public bool isBeingSpawned;
     public Vector3 spawnPos;
@@ -19,7 +19,7 @@ public class Piece : MonoBehaviour
 
     float t;
 
-    public Piece(int type, int player)
+    public PieceUI(PieceType type, int player)
     {
         this.type = type;
         this.player = player;
@@ -31,13 +31,13 @@ public class Piece : MonoBehaviour
         isBeingSpawned = true;
         this.spawnPos = this.transform.position;
 
-        if (this.type == 1)
+        if (this.type == PieceType.STONE)
         {
             this.spawnSpeed = 1.5f;
             this.spawnRotationAxis = Vector3.up;
 
         }
-        else if (this.type == 2)
+        else if (this.type == PieceType.BLOCKER)
         {
             this.spawnSpeed = 1.5f;
             this.spawnRotationAxis = Vector3.right;
@@ -47,8 +47,8 @@ public class Piece : MonoBehaviour
             this.spawnSpeed = .2f;
         }
 
-        gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
-        this.GetComponent<Renderer>().material = player == 1 ? gameManager.white : gameManager.black;
+        ui = GameObject.Find("Game Manager").GetComponent<UI>();
+        this.GetComponent<Renderer>().material = player == 1 ? ui.white : ui.black;
     }
 
     // Update is called once per frame
