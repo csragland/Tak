@@ -4,16 +4,22 @@ using System.Collections.Generic;
 public class Tak
 {
     public List<Piece>[,] board;
-
-
+    
     public Tak(List<Piece>[,] takBoard)
     {
         this.board = takBoard;
     }
 
-    public bool EndsGame(Move move)
+    public void DoMove(Move move)
     {
-        return false;
+        if (move.GetType() == typeof(Placement))
+        {
+            this.DoPlacement((Placement)move);
+        }
+        if (move.GetType() == typeof(Commute))
+        {
+            this.DoCommute((Commute)move);
+        }
     }
 
     public bool IsLegalMove(Move move)
@@ -28,6 +34,13 @@ public class Tak
             return this.IsLegalMove((Commute) move);
         }
         return false;
+    }
+
+    public bool EndsGame(Move move)
+    {
+        bool[,] visited = new bool[Settings.dimension, Settings.dimension];
+        int[] spans = this.FindSpan(move.player, move.destination, visited, move.destination);
+        return Math.Max(spans[1] - spans[0], spans[3] - spans[2]) >= Settings.dimension - 1;
     }
 
     public void DoPlacement(Placement move)
@@ -89,19 +102,18 @@ public class Tak
                 return false;
             }
 
-            if ((jump.cutoff < 1 && i > 0) || startStack.Count - jump.cutoff > GameManager.dimension)
+            if ((jump.cutoff < 1 && i > 0) || startStack.Count - jump.cutoff > Settings.dimension)
             {
                 return false;
             }
 
-            List<Piece> endStack = this.board[jump.destination.row, jump.destination.col];
-            Piece startCrown = startStack[startStack.Count - 1];
+            Piece startCrown = GetCrown(jump.origin);
             if (startCrown.player != move.player)
             {
                 return false;
             }
 
-            Piece endCrown = endStack[endStack.Count - 1];
+            Piece endCrown = this.GetCrown(jump.destination);
             if (endCrown.type == PieceType.CAPSTONE)
             {
                 return false;
@@ -114,36 +126,31 @@ public class Tak
         return true;
     }
 
-    public bool ReachesEdge(int player, Tile tile, bool[,] visited, Tile origin)
+    public int[] FindSpan(int player, Tile tile, bool[,] visited, Tile origin)
     {
-        if (Utils.Distance(tile.row, origin.row) >= GameManager.dimension - 1 || Utils.Distance(tile.col, origin.col) >= GameManager.dimension - 1)
-        {
-            return true;
-        }
-
         visited[tile.row, tile.col] = true;
+        int[] most = { int.MaxValue, int.MinValue, int.MaxValue, int.MinValue };
 
-        foreach (var neighbor in this.GetNeighbors(player, tile))
+        foreach (var neighbor in this.GetNeighbors(player,tile))
         {
             if (!visited[neighbor.row, neighbor.col])
             {
-                if (ReachesEdge(player, neighbor, visited, origin))
-                {
-                    return true;
-                }
-                //    return true
-                //return false || ReachesEdge(player, neighbor, visited, origin);
+                most = FindSpan(player, neighbor, visited, origin);
+                most[0] = Math.Min(most[0], neighbor.row);
+                most[1] = Math.Max(most[1], neighbor.row);
+                most[2] = Math.Min(most[2], neighbor.col);
+                most[3] = Math.Max(most[3], neighbor.col);
             }
         }
 
-        return false;
+        return most;
     }
 
     public List<Tile> GetNeighbors(int player, Tile tile)
     {
         List<Tile> neighbors = new List<Tile>();
 
-        if (tile.row < GameManager.dimension - 1)
+        if (tile.row < Settings.dimension - 1)
         {
             Tile tileUp = new Tile(tile.row + 1, tile.col);
             if (this.GetCrown(tileUp).player == player)
@@ -159,7 +166,7 @@ public class Tak
                 neighbors.Add(tileDown);
             }
         }
-        if (tile.col < GameManager.dimension - 1)
+        if (tile.col < Settings.dimension - 1)
         {
             Tile tileRight = new Tile(tile.row, tile.col + 1);
             if (this.GetCrown(tileRight).player == player)

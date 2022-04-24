@@ -60,7 +60,7 @@ public class PieceUI : MonoBehaviour
             {
                 t += Time.deltaTime / spawnSpeed;
                 this.transform.position = Vector3.Lerp(spawnPos, destination, t);
-                this.transform.Rotate((720 / spawnSpeed) * Time.deltaTime * this.spawnRotationAxis);
+                this.transform.Rotate((360) * Time.deltaTime * this.spawnRotationAxis);
             }
             else
             {

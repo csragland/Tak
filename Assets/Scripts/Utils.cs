@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+using UnityEngine;
 
 public static class Utils
 {
@@ -13,23 +12,29 @@ public static class Utils
         return rowIndex * dim + colIndex;
     }
 
+    public static bool IsOnHorizontalEdge(int tileNum, int dim)
+    {
+        return tileNum % dim == 0 || tileNum % dim == dim - 1;
+    }
+
+    public static bool IsOnVerticalEdge(int tileNum, int dim)
+    {
+        return tileNum < dim || tileNum < dim * (dim - 1);
+    }
+
     public static int OneNorm(int[] direction)
     {
         int sum = 0;
         foreach (var number in direction)
         {
-            sum += Math.Abs(number);
+            sum += Mathf.Abs(number);
         }
         return sum;
     }
 
-    public static int Distance(int x, int y)
-    {
-        return Math.Abs(x - y);
-    }
+}
 
-    public static object GetLast(List<object> list)
-    {
-        return list[list.Count - 1];
-    }
+public enum Comparisons
+{
+    LT, LTE, GTE, GT
 }

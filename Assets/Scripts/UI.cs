@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class UI : MonoBehaviour
 {
@@ -21,7 +22,6 @@ public class UI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
     }
 
     // Update is called once per frame
@@ -32,7 +32,7 @@ public class UI : MonoBehaviour
 
     public void InitalizeBoard(int dimension)
     {
-        Debug.Assert(dimension % 2 == 1);
+        Debug.Assert(!Utils.IsEven(dimension));
         this.gameBoard = new GameObject("Board");
         Vector3 startPoint = this.boardLocation + new Vector3(-Mathf.Floor(dimension / 2) * tileDimensions.x, 0, Mathf.Floor(dimension / 2) * tileDimensions.z);
         Vector3 tilePosition = startPoint;
@@ -50,10 +50,10 @@ public class UI : MonoBehaviour
 
                 tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? this.black : this.white;
 
-                tilePosition.z -= tileDimensions.z;
+                tilePosition.x += tileDimensions.x;
             }
-            tilePosition.x += tileDimensions.x;
-            tilePosition.z = startPoint.z;
+            tilePosition.z -= tileDimensions.z;
+            tilePosition.x = startPoint.x;
         }
     }
 
@@ -62,11 +62,11 @@ public class UI : MonoBehaviour
         int row = placement.destination.row;
         int col = placement.destination.col;
 
-        int tileNum = Utils.IndexToNum(row, col, GameManager.dimension);
-        Vector3 tilePos = gameBoard.transform.Find("Tile_" + tileNum).position;
+        int tileNum = Utils.IndexToNum(row, col, Settings.dimension);
+        GameObject tile = GameObject.Find("Board/Tile_" + tileNum);
 
         GameObject objToSpawn = placement.piece == PieceType.CAPSTONE ? this.capstone : this.stone;
-        Vector3 spawnPos = tilePos + this.pieceSpawnHeight * Vector3.up;
+        Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
         Quaternion spawnRotation = placement.piece == PieceType.BLOCKER ? PieceUI.type2Rotation : objToSpawn.transform.rotation;
         float pieceHeight = placement.piece == PieceType.BLOCKER ? objToSpawn.transform.localScale.x : objToSpawn.transform.localScale.y;
         if (placement.piece == PieceType.CAPSTONE)
@@ -76,9 +76,10 @@ public class UI : MonoBehaviour
         }
 
         GameObject pieceObj = Instantiate(objToSpawn, spawnPos, spawnRotation);
+        pieceObj.transform.SetParent(tile.transform);
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();
-        pieceData.destination = tilePos + ((tileDimensions.y + pieceHeight) / 2) * Vector3.up;
+        pieceData.destination = tile.transform.position + ((tileDimensions.y + pieceHeight) / 2) * Vector3.up;
         pieceData.type = placement.piece; pieceData.player = placement.player;
     }
 
