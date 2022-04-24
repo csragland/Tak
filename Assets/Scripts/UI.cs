@@ -1,17 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class UI : MonoBehaviour
 {
 
     public GameObject gameBoard;
-    public Vector3 boardLocation = Vector3.zero;
 
-    public Vector3 tileDimensions = new Vector3(1, .25f, 1);
-
-    public int pieceSpawnHeight = 6;
+    public float pieceSpawnHeight;
 
     public GameObject stone;
     public GameObject capstone;
@@ -34,7 +28,7 @@ public class UI : MonoBehaviour
     {
         Debug.Assert(!Utils.IsEven(dimension));
         this.gameBoard = new GameObject("Board");
-        Vector3 startPoint = this.boardLocation + new Vector3(-Mathf.Floor(dimension / 2) * tileDimensions.x, 0, Mathf.Floor(dimension / 2) * tileDimensions.z);
+        Vector3 startPoint = Settings.location + new Vector3(-Mathf.Floor(dimension / 2) * Settings.tileDimensions.x, 0, Mathf.Floor(dimension / 2) * Settings.tileDimensions.z);
         Vector3 tilePosition = startPoint;
         int tileNum;
         for (int i = 0; i < dimension; i++)
@@ -45,14 +39,14 @@ public class UI : MonoBehaviour
                 tileNum = Utils.IndexToNum(i, j, dimension);
                 tile.name = "Tile_" + tileNum;
                 tile.transform.position = tilePosition;
-                tile.transform.localScale = tileDimensions;
+                tile.transform.localScale = Settings.tileDimensions;
                 tile.transform.SetParent(gameBoard.transform);
 
                 tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? this.black : this.white;
 
-                tilePosition.x += tileDimensions.x;
+                tilePosition.x += Settings.tileDimensions.x;
             }
-            tilePosition.z -= tileDimensions.z;
+            tilePosition.z -= Settings.tileDimensions.z;
             tilePosition.x = startPoint.x;
         }
     }
@@ -66,20 +60,35 @@ public class UI : MonoBehaviour
         GameObject tile = GameObject.Find("Board/Tile_" + tileNum);
 
         GameObject objToSpawn = placement.piece == PieceType.CAPSTONE ? this.capstone : this.stone;
-        Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
-        Quaternion spawnRotation = placement.piece == PieceType.BLOCKER ? PieceUI.type2Rotation : objToSpawn.transform.rotation;
-        float pieceHeight = placement.piece == PieceType.BLOCKER ? objToSpawn.transform.localScale.x : objToSpawn.transform.localScale.y;
-        if (placement.piece == PieceType.CAPSTONE)
+
+        Quaternion spawnRotation = Quaternion.Euler(0, 0, 0);
+        float pieceHeight = 0;
+        if (placement.piece == PieceType.STONE)
         {
-            // Cylinders' height is double the scale
-            pieceHeight *= 2;
+            this.pieceSpawnHeight = Settings.stoneSpawnHeight;
+            spawnRotation = objToSpawn.transform.rotation;
+            pieceHeight = objToSpawn.transform.localScale.y;
         }
+        else if (placement.piece == PieceType.BLOCKER)
+        {
+            this.pieceSpawnHeight = Settings.blockerSpawnHeight;
+            spawnRotation = PieceUI.type2Rotation;
+            pieceHeight = objToSpawn.transform.localScale.x;
+        }
+        else if (placement.piece == PieceType.CAPSTONE)
+        {
+            this.pieceSpawnHeight = Settings.capstoneSpawnHeight;
+            spawnRotation = objToSpawn.transform.rotation;
+            pieceHeight = objToSpawn.transform.localScale.y * 2;
+        }
+
+        Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
 
         GameObject pieceObj = Instantiate(objToSpawn, spawnPos, spawnRotation);
         pieceObj.transform.SetParent(tile.transform);
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();
-        pieceData.destination = tile.transform.position + ((tileDimensions.y + pieceHeight) / 2) * Vector3.up;
+        pieceData.destination = tile.transform.position + ((Settings.tileDimensions.y + pieceHeight) / 2) * Vector3.up + (tile.transform.childCount * pieceHeight) * Vector3.up;
         pieceData.type = placement.piece; pieceData.player = placement.player;
     }
 

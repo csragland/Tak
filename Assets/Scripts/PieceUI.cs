@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PieceUI : MonoBehaviour
@@ -10,11 +8,12 @@ public class PieceUI : MonoBehaviour
 
     UI ui;
 
-    public bool isBeingSpawned;
+    private bool isBeingSpawned;
     public Vector3 spawnPos;
     public Vector3 destination;
     private Vector3 spawnRotationAxis;
-    public float spawnSpeed;
+    private float spawnRPS;
+    public float spawnTime;
     public static Quaternion type2Rotation = Quaternion.Euler(new Vector3(90, 45, 0));
 
     float t;
@@ -33,18 +32,21 @@ public class PieceUI : MonoBehaviour
 
         if (this.type == PieceType.STONE)
         {
-            this.spawnSpeed = 1.5f;
+            this.spawnTime = Settings.stoneSpawnTime;
+            this.spawnRPS = Settings.stoneRPS;
             this.spawnRotationAxis = Vector3.up;
 
         }
         else if (this.type == PieceType.BLOCKER)
         {
-            this.spawnSpeed = 1.5f;
+            this.spawnTime = Settings.blockerSpawnTime;
+            this.spawnRPS = Settings.blockerRPS;
             this.spawnRotationAxis = Vector3.right;
         }
         else
         {
-            this.spawnSpeed = .2f;
+            this.spawnRPS = Settings.capstoneRPS;
+            this.spawnTime = Settings.capstoneSpawnTime;
         }
 
         ui = GameObject.Find("Game Manager").GetComponent<UI>();
@@ -58,9 +60,9 @@ public class PieceUI : MonoBehaviour
         {
             if (this.transform.position != this.destination)
             {
-                t += Time.deltaTime / spawnSpeed;
+                t += Time.deltaTime / spawnTime;
                 this.transform.position = Vector3.Lerp(spawnPos, destination, t);
-                this.transform.Rotate((360) * Time.deltaTime * this.spawnRotationAxis);
+                this.transform.Rotate(360 * this.spawnRPS * Time.deltaTime * this.spawnRotationAxis);
             }
             else
             {

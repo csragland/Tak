@@ -3,19 +3,17 @@ using UnityEngine;
 public class CameraControl : MonoBehaviour
 {
     float horizontalInput;
-    float cameraSpeed = 2;
     int currentTileId;
 
     bool initialized = false;
 
     Quaternion snapStart;
-    float snapSpeed = .2f;
     float t;
 
     // Start is called before the first frame update
     void Start()
     {
-        Camera.main.transform.position = new Vector3(0, 3, -4);
+        Camera.main.transform.position = Settings.cameraOffset;
         
     }
 
@@ -44,13 +42,13 @@ public class CameraControl : MonoBehaviour
             horizontalInput = 0;
         }
 
-        if (transform.rotation.y != 0 && CompareRotations(Comparisons.LTE, 7, true) && horizontalInput == 0)
+        if (transform.rotation.y != 0 && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true) && horizontalInput == 0)
         {
-            t += Time.deltaTime / snapSpeed;
+            t += Time.deltaTime / Settings.cameraSnapSpeed;
             this.transform.rotation = Quaternion.Lerp(snapStart, Quaternion.Euler(0, 0, 0), t);
         }
 
-        transform.Rotate(cameraSpeed * horizontalInput * Vector3.up);
+        transform.Rotate(Settings.cameraSpeed * horizontalInput * Vector3.up);
 
     }
 
@@ -65,7 +63,7 @@ public class CameraControl : MonoBehaviour
                 && !(currentTileId % Settings.dimension == Settings.dimension - 1))
             {
                 currentTileId++;
-                this.transform.position = GameObject.Find("Board/Tile_" + currentTileId).transform.position;
+                this.SetFocus(currentTileId);
             }
             if (((e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LTE, 45, true))
                 || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GT, 45))
@@ -73,7 +71,7 @@ public class CameraControl : MonoBehaviour
                 && !(currentTileId % Settings.dimension == 0))
             {
                 currentTileId--;
-                this.transform.position = GameObject.Find("Board/Tile_" + currentTileId).transform.position;
+                this.SetFocus(currentTileId);
             }
             if (((e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LTE, 45, true))
                 || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GT, 45))
@@ -81,7 +79,7 @@ public class CameraControl : MonoBehaviour
                 && !(currentTileId < Settings.dimension))
             {
                 currentTileId -= Settings.dimension;
-                this.transform.position = GameObject.Find("Board/Tile_" + currentTileId).transform.position;
+                this.SetFocus(currentTileId);
             }
             if (((e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LTE, 45, true))
                 || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GT, 45))
@@ -89,7 +87,7 @@ public class CameraControl : MonoBehaviour
                 && !(currentTileId >= Settings.dimension * (Settings.dimension - 1)))
             {
                 currentTileId += Settings.dimension;
-                this.transform.position = GameObject.Find("Board/Tile_" + currentTileId).transform.position;
+                this.SetFocus(currentTileId);
             }
         }
     }
@@ -145,6 +143,20 @@ public class CameraControl : MonoBehaviour
             }
         }
         return false;
+    }
+
+    private void SetFocus(int tileId)
+    {
+        GameObject tile = GameObject.Find("Board/Tile_" + tileId);
+        int numChildren = tile.transform.childCount;
+        if (numChildren > 0)
+        {
+            this.transform.position = tile.transform.GetChild(numChildren - 1).position;
+        }
+        else
+        {
+            this.transform.position = tile.transform.position;
+        }
     }
 
 }

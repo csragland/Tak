@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
         }
         tak = new Tak(boardData);
         ui.InitalizeBoard(Settings.dimension);
-        ui.DoPlacement(new Placement(1, PieceType.STONE, new Tile(1, 1)));
+        StackItUp();
     }
 
     // Update is called once per frame
@@ -34,9 +34,20 @@ public class GameManager : MonoBehaviour
 
     }
 
+    void StackItUp()
+    {
+        int pieces = 7;
+        float time = 1.5f;
+        for (int i = 0; i < pieces; i++)
+        {
+            Invoke("PlacePiece", time * i);
+        }
+    }
+
     void PlacePiece()
     {
         ui.DoPlacement(new Placement(1, PieceType.STONE, new Tile(1, 1)));
+        tak.DoPlacement(new Placement(1, PieceType.STONE, new Tile(1, 1)));
     }
 
 }
