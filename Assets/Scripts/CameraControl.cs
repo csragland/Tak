@@ -2,7 +2,10 @@ using UnityEngine;
 
 public class CameraControl : MonoBehaviour
 {
+
     float horizontalInput;
+    float verticalInput;
+
     int currentTileId;
 
     bool initialized = false;
@@ -24,6 +27,7 @@ public class CameraControl : MonoBehaviour
         {
             currentTileId = (int)Mathf.Floor(Mathf.Pow(Settings.dimension, 2) / 2);
             GameObject centerTile = GameObject.Find("Board/Tile_" + currentTileId);
+            centerTile.GetComponent<cakeslice.Outline>().enabled = true;
             this.transform.position = centerTile.transform.position;
             this.initialized = true;
         }
@@ -42,13 +46,27 @@ public class CameraControl : MonoBehaviour
             horizontalInput = 0;
         }
 
+        if (Input.GetKey(KeyCode.W) && Vector3.Distance(Camera.main.transform.position, this.transform.position) > 1)
+        {
+            verticalInput = 1;
+        }
+        else if (Input.GetKey(KeyCode.S) && Vector3.Distance(Camera.main.transform.position, this.transform.position) < 10)
+        {
+            verticalInput = -1;
+        }
+        else
+        {
+            verticalInput = 0;
+        }
+
         if (transform.rotation.y != 0 && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true) && horizontalInput == 0)
         {
             t += Time.deltaTime / Settings.cameraSnapSpeed;
             this.transform.rotation = Quaternion.Lerp(snapStart, Quaternion.Euler(0, 0, 0), t);
         }
 
-        transform.Rotate(Settings.cameraSpeed * horizontalInput * Vector3.up);
+        transform.Rotate(Settings.cameraRotateSpeed * horizontalInput * Vector3.up);
+        Camera.main.transform.Translate(Settings.cameraZoomSpeed * verticalInput * Vector3.forward);
 
     }
 
@@ -62,6 +80,7 @@ public class CameraControl : MonoBehaviour
                 || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LTE, -45)))
                 && !(currentTileId % Settings.dimension == Settings.dimension - 1))
             {
+                this.Unfocus(currentTileId);
                 currentTileId++;
                 this.SetFocus(currentTileId);
             }
@@ -70,6 +89,7 @@ public class CameraControl : MonoBehaviour
                 || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LTE, -45)))
                 && !(currentTileId % Settings.dimension == 0))
             {
+                this.Unfocus(currentTileId);
                 currentTileId--;
                 this.SetFocus(currentTileId);
             }
@@ -78,6 +98,7 @@ public class CameraControl : MonoBehaviour
                 || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LTE, -45)))
                 && !(currentTileId < Settings.dimension))
             {
+                this.Unfocus(currentTileId);
                 currentTileId -= Settings.dimension;
                 this.SetFocus(currentTileId);
             }
@@ -86,6 +107,7 @@ public class CameraControl : MonoBehaviour
                 || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LTE, -45)))
                 && !(currentTileId >= Settings.dimension * (Settings.dimension - 1)))
             {
+                this.Unfocus(currentTileId);
                 currentTileId += Settings.dimension;
                 this.SetFocus(currentTileId);
             }
@@ -151,11 +173,37 @@ public class CameraControl : MonoBehaviour
         int numChildren = tile.transform.childCount;
         if (numChildren > 0)
         {
-            this.transform.position = tile.transform.GetChild(numChildren - 1).position;
+            GameObject crown = tile.transform.GetChild(numChildren - 1).gameObject;
+            this.transform.position = crown.transform.position;
+            if (crown.GetComponent<PieceUI>().player == GameManager.currentPlayer)
+            {
+                for (int i = 0; i < numChildren; i++)
+                {
+                    tile.transform.GetChild(i).gameObject.GetComponent<cakeslice.Outline>().enabled = true;
+                }
+            }
         }
         else
         {
             this.transform.position = tile.transform.position;
+            tile.GetComponent<cakeslice.Outline>().enabled = true;
+        }
+    }
+
+    private void Unfocus(int tileId)
+    {
+        GameObject tile = GameObject.Find("Board/Tile_" + tileId);
+        int numChildren = tile.transform.childCount;
+        if (numChildren > 0)
+        {
+            for (int i = 0; i < numChildren; i++)
+            {
+                tile.transform.GetChild(i).gameObject.GetComponent<cakeslice.Outline>().enabled = false;
+            }
+        }
+        else // Doesn't work as intended upon spawning piece
+        {
+            tile.GetComponent<cakeslice.Outline>().enabled = false;
         }
     }
 

@@ -7,9 +7,14 @@ public static class Utils
         return num % 2 == 0;
     }
 
-    public static int IndexToNum(int rowIndex, int colIndex, int dim)
+    public static int IndexToNum(int rowIndex, int colIndex)
     {
-        return rowIndex * dim + colIndex;
+        return rowIndex * Settings.dimension + colIndex;
+    }
+
+    public static GameObject GetUITile(Tile tile)
+    {
+        return GameObject.Find("Board/Tile_" + IndexToNum(tile.row, tile.col));
     }
 
     public static bool IsOnHorizontalEdge(int tileNum, int dim)

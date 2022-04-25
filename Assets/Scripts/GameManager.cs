@@ -8,7 +8,9 @@ public class GameManager : MonoBehaviour
 
     public UI ui;
 
-    public bool gameOver = false;
+    public static int currentPlayer = 1;
+
+    public static bool gameOver = false;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +28,7 @@ public class GameManager : MonoBehaviour
         tak = new Tak(boardData);
         ui.InitalizeBoard(Settings.dimension);
         StackItUp();
+        Invoke("Commute", 11);
     }
 
     // Update is called once per frame
@@ -36,8 +39,8 @@ public class GameManager : MonoBehaviour
 
     void StackItUp()
     {
-        int pieces = 7;
-        float time = 1.5f;
+        int pieces = 10;
+        float time = 1f;
         for (int i = 0; i < pieces; i++)
         {
             Invoke("PlacePiece", time * i);
@@ -46,8 +49,16 @@ public class GameManager : MonoBehaviour
 
     void PlacePiece()
     {
-        ui.DoPlacement(new Placement(1, PieceType.STONE, new Tile(1, 1)));
-        tak.DoPlacement(new Placement(1, PieceType.STONE, new Tile(1, 1)));
+        int player = Random.Range(1, 3);
+        ui.DoPlacement(new Placement(player, PieceType.STONE, new Tile(2, 2)));
+        tak.DoPlacement(new Placement(player, PieceType.STONE, new Tile(2, 2)));
+    }
+
+    void Commute()
+    {
+        List<Jump> jumps = new List<Jump>();
+        jumps.Add(new Jump(0, new Tile(2, 2), new Tile(2, 1)));
+        ui.DoCommute(new Commute(jumps));
     }
 
 }

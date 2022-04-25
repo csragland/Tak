@@ -9,14 +9,17 @@ public class PieceUI : MonoBehaviour
     UI ui;
 
     private bool isBeingSpawned;
-    public Vector3 spawnPos;
+    private bool isCommuting;
+    public Vector3 origin;
     public Vector3 destination;
     private Vector3 spawnRotationAxis;
     private float spawnRPS;
     public float spawnTime;
-    public static Quaternion type2Rotation = Quaternion.Euler(new Vector3(90, 45, 0));
 
-    float t;
+    float t = 0;
+
+    Rigidbody rb;
+    bool isGrounded;
 
     public PieceUI(PieceType type, int player)
     {
@@ -27,8 +30,11 @@ public class PieceUI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        rb = this.GetComponent<Rigidbody>();
+        this.GetComponent<Rigidbody>().isKinematic = true;
         isBeingSpawned = true;
-        this.spawnPos = this.transform.position;
+        isCommuting = false;
+        this.origin = this.transform.position;
 
         if (this.type == PieceType.STONE)
         {
@@ -61,13 +67,67 @@ public class PieceUI : MonoBehaviour
             if (this.transform.position != this.destination)
             {
                 t += Time.deltaTime / spawnTime;
-                this.transform.position = Vector3.Lerp(spawnPos, destination, t);
+                this.transform.position = Vector3.Lerp(origin, destination, t);
                 this.transform.Rotate(360 * this.spawnRPS * Time.deltaTime * this.spawnRotationAxis);
             }
             else
             {
                 this.isBeingSpawned = false;
+                this.ToggleRb();
+                t = 0;
             }
         }
+        else if (this.isCommuting)
+        {
+            if(this.transform.position.x != this.destination.x)
+            {
+                if (this.isGrounded)
+                {
+                    Vector3 direction = this.destination - this.origin;
+                    this.rb.AddForce(Vector3.up * GetVerticalImpulse(1, 1) + direction * this.GetHorizontalImpulse(1, 1), ForceMode.Impulse);
+                    this.isGrounded = false;
+                }
+            }
+            else
+            {
+                this.isCommuting = false;
+            }
+            
+        }
+    }
+
+    public void SetCommute(Vector3 destination)
+    {
+        this.isCommuting = true;
+        this.origin = this.transform.position;
+        this.destination = destination;
+        this.rb.isKinematic = false;
+    }
+
+    float GetVerticalImpulse(float height, float mass)
+    {
+        return Mathf.Sqrt(-2 * Physics.gravity.y * height) * mass;
+    }
+
+    float GetHorizontalImpulse(float height, float mass)
+    {
+        float time = -GetVerticalImpulse(height, mass) / Physics.gravity.y;
+        return Settings.tileDimensions.x / (2 * time);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        this.isGrounded = true;
+        if (this.isCommuting)
+        {
+            this.rb.isKinematic = true;
+            this.transform.position = this.destination;
+        }
+        Debug.Log("Hit");
+    }
+
+    private void ToggleRb()
+    {
+        this.rb.isKinematic = !this.rb.isKinematic;
     }
 }
