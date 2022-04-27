@@ -14,6 +14,8 @@ public static class Settings
     public static readonly float cameraZoomSpeed = .1f;
     public static readonly float cameraSnapRadius = 7;
     public static readonly float cameraSnapSpeed = .2f;
+    public static readonly float cameraTransitionTime = .5f;
+    public static readonly bool splitBoardView = true;
 
     [Header("Stone Settings")]
     public static readonly float stoneRPS = 1.5f;
@@ -29,7 +31,6 @@ public static class Settings
     public static readonly float capstoneRPS = 0;
     public static readonly float capstoneSpawnTime = .2f;
     public static readonly float capstoneSpawnHeight = 6;
-
 
 
 }

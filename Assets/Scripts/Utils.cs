@@ -36,10 +36,9 @@ public static class Utils
         }
         return sum;
     }
-
 }
 
 public enum Comparisons
 {
-    LT, LTE, GTE, GT
+    LT, LTE, E, GTE, GT
 }

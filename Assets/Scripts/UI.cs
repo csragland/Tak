@@ -103,9 +103,25 @@ public class UI : MonoBehaviour
             {
                 GameObject endStack = Utils.GetUITile(jump.destination);
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(stone)) / 2) * Vector3.up + (i * GetPieceHeight(stone)) * Vector3.up;
-                tile.transform.GetChild(i).GetComponent<PieceUI>().SetCommute(endPosition);
+                tile.transform.GetChild(i).GetComponent<PieceUI>().SetCommute(endPosition, endStack);
             }
    
+        }
+    }
+
+    public void DoJump(Jump jump)
+    {
+        GameObject tile = Utils.GetUITile(jump.origin);
+        for (int i = jump.cutoff; i < tile.transform.childCount; i++)
+        {
+            if (i == tile.transform.childCount)
+            {
+                tile.transform.GetChild(i).GetComponent<PieceUI>().isEmitter = true;
+            }
+            GameObject endStack = Utils.GetUITile(jump.destination);
+            Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(stone)) / 2) * Vector3.up + (i * GetPieceHeight(stone)) * Vector3.up;
+            tile.transform.GetChild(i).GetComponent<PieceUI>().SetCommute(endPosition, endStack);
+            tile.transform.GetChild(i).SetParent(endStack.transform);
         }
     }
 

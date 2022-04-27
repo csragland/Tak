@@ -6,22 +6,38 @@ public class CameraControl : MonoBehaviour
     float horizontalInput;
     float verticalInput;
 
-    int currentTileId;
+    public int currentTileId;
 
     bool initialized = false;
 
+    public int player;
+
     Quaternion snapStart;
-    float t;
+    Quaternion snapEnd;
+    float t1;
+    float t2;
+
+    Vector3 startZoom;
+    bool zoomPrepared;
+    float startDist;
+    float currentDist;
+    Vector3 zoomDestination;
+
+    Quaternion startRotation;
+    Quaternion endRotation;
+    bool rotationPrepared;
 
     // Start is called before the first frame update
     void Start()
     {
         Camera.main.transform.position = Settings.cameraOffset;
+        player = GameManager.currentPlayer;
+        snapEnd = Quaternion.Euler(0, 0, 0);
         
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void LateUpdate()
     {
         if (!this.initialized)
         {
@@ -31,12 +47,12 @@ public class CameraControl : MonoBehaviour
             this.transform.position = centerTile.transform.position;
             this.initialized = true;
         }
-        if (Input.GetKey(KeyCode.A) && CompareRotations(Comparisons.LTE, 90))
+        if (  Input.GetKey(KeyCode.A) && (!Settings.splitBoardView || (player == 1 && CompareRotations(Comparisons.LTE, 90)) || (player == 2 && (CompareRotations(Comparisons.LTE, -90) || CompareRotations(Comparisons.GT, 0))))  )
         {
             horizontalInput = 1;
             snapStart = transform.rotation;
         }
-        else if (Input.GetKey(KeyCode.D) && CompareRotations(Comparisons.GTE, -90))
+        else if (Input.GetKey(KeyCode.D) && (!Settings.splitBoardView || (player == 1 && CompareRotations(Comparisons.GTE, -90)) || (player == 2 && (CompareRotations(Comparisons.GTE, 90) || CompareRotations(Comparisons.LT, 0)))))
         {
             horizontalInput = -1;
             snapStart = transform.rotation;
@@ -59,25 +75,34 @@ public class CameraControl : MonoBehaviour
             verticalInput = 0;
         }
 
-        if (transform.rotation.y != 0 && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true) && horizontalInput == 0)
+        if (player == GameManager.currentPlayer)
         {
-            t += Time.deltaTime / Settings.cameraSnapSpeed;
-            this.transform.rotation = Quaternion.Lerp(snapStart, Quaternion.Euler(0, 0, 0), t);
+            if (horizontalInput == 0 && ((transform.rotation.y != 0 && player == 1 && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true)) || (transform.eulerAngles.y != 180 && player == 2 && CompareRotations(Comparisons.GTE, Mathf.Abs(MapAngle(this.snapEnd.eulerAngles.y)) - Settings.cameraSnapRadius, true))))
+            {
+                t1 += Time.deltaTime / Settings.cameraSnapSpeed;
+                this.transform.rotation = Quaternion.Lerp(snapStart, snapEnd, t1);
+            }
+            transform.Rotate(Settings.cameraRotateSpeed * horizontalInput * Vector3.up);
+            Camera.main.transform.Translate(Settings.cameraZoomSpeed * verticalInput * Vector3.forward);
         }
-
-        transform.Rotate(Settings.cameraRotateSpeed * horizontalInput * Vector3.up);
-        Camera.main.transform.Translate(Settings.cameraZoomSpeed * verticalInput * Vector3.forward);
+        else
+        {
+            this.SwapPlayer(GameManager.currentPlayer);
+        }
+        
 
     }
 
     private void OnGUI()
     {
         Event e = Event.current;
-        if (e.type == EventType.KeyDown)
+        if (e.type == EventType.KeyDown && player == GameManager.currentPlayer)
         {
+            // I can maybe make a function to map between quadrants and buttons (with matrices?)
             if (((e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GT, 45)) 
-                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LTE, -45)))
+                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GTE, 135, true)))
                 && !(currentTileId % Settings.dimension == Settings.dimension - 1))
             {
                 this.Unfocus(currentTileId);
@@ -85,8 +110,9 @@ public class CameraControl : MonoBehaviour
                 this.SetFocus(currentTileId);
             }
             if (((e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GT, 45))
-                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LTE, -45)))
+                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GTE, 135, true)))
                 && !(currentTileId % Settings.dimension == 0))
             {
                 this.Unfocus(currentTileId);
@@ -94,8 +120,9 @@ public class CameraControl : MonoBehaviour
                 this.SetFocus(currentTileId);
             }
             if (((e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GT, 45))
-                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LTE, -45)))
+                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GTE, 135, true)))
                 && !(currentTileId < Settings.dimension))
             {
                 this.Unfocus(currentTileId);
@@ -103,8 +130,9 @@ public class CameraControl : MonoBehaviour
                 this.SetFocus(currentTileId);
             }
             if (((e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GT, 45))
-                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LTE, -45)))
+                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GTE, 135, true)))
                 && !(currentTileId >= Settings.dimension * (Settings.dimension - 1)))
             {
                 this.Unfocus(currentTileId);
@@ -120,48 +148,48 @@ public class CameraControl : MonoBehaviour
         {
             if (!abs)
             {
-                return this.transform.rotation.y < Quaternion.Euler(0, rotation, 0).y;
+                return MapAngle(this.transform.eulerAngles.y) < rotation;
 
             }
             else
             {
-                return Mathf.Abs(this.transform.rotation.y) < Quaternion.Euler(0, rotation, 0).y;
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) < rotation;
             }
         }
         if (operation == Comparisons.LTE)
         {
             if (!abs)
             {
-                return this.transform.rotation.y <= Quaternion.Euler(0, rotation, 0).y;
+                return MapAngle(this.transform.eulerAngles.y) <= rotation;
 
             }
             else
             {
-                return Mathf.Abs(this.transform.rotation.y) <= Quaternion.Euler(0, rotation, 0).y;
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) <= rotation;
             }
         }
         if (operation == Comparisons.GTE)
         {
             if (!abs)
             {
-                return this.transform.rotation.y >= Quaternion.Euler(0, rotation, 0).y;
+                return MapAngle(this.transform.eulerAngles.y) >= rotation;
 
             }
             else
             {
-                return Mathf.Abs(this.transform.rotation.y) >= Quaternion.Euler(0, rotation, 0).y;
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) >= rotation;
             }
         }
         if (operation == Comparisons.GT)
         {
             if (!abs)
             {
-                return this.transform.rotation.y > Quaternion.Euler(0, rotation, 0).y;
+                return MapAngle(this.transform.eulerAngles.y) > rotation;
 
             }
             else
             {
-                return Mathf.Abs(this.transform.rotation.y) > Quaternion.Euler(0, rotation, 0).y;
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) > rotation;
             }
         }
         return false;
@@ -201,10 +229,55 @@ public class CameraControl : MonoBehaviour
                 tile.transform.GetChild(i).gameObject.GetComponent<cakeslice.Outline>().enabled = false;
             }
         }
-        else // Doesn't work as intended upon spawning piece
+        tile.GetComponent<cakeslice.Outline>().enabled = false;
+    }
+
+    private void SwapPlayer(int player)
+    {
+        Debug.Assert(Vector3.Magnitude(Settings.cameraOffset) % 1f == 0);
+        if (!zoomPrepared)
         {
-            tile.GetComponent<cakeslice.Outline>().enabled = false;
+            t1 = 0;
+            startDist = Vector3.Magnitude(Settings.cameraOffset);
+            currentDist = Vector3.Magnitude(Camera.main.transform.position);
+            startZoom = Camera.main.transform.position;
+            zoomDestination = Camera.main.transform.position + (currentDist - startDist) * Camera.main.transform.forward;
+            zoomPrepared = true;
         }
+        if (!rotationPrepared)
+        {
+            t2 = 0;
+            startRotation = this.transform.rotation;
+            endRotation = Quaternion.Euler(0, (360 / player) % 360, 0);
+            rotationPrepared = true;
+        }
+
+        if (Mathf.Round(Vector3.Magnitude(Camera.main.transform.position)) != Mathf.Round(startDist))
+        {
+            t1 += Time.deltaTime / Settings.cameraTransitionTime;
+            Camera.main.transform.position = Vector3.Lerp(startZoom, zoomDestination, t1);
+        }
+        else if (this.transform.rotation.eulerAngles.y != endRotation.eulerAngles.y)
+        {
+            zoomPrepared = false;
+            t2 += Time.deltaTime / Settings.cameraTransitionTime;
+            this.transform.rotation = Quaternion.Lerp(startRotation, endRotation, t2);
+        }
+        else
+        {
+            rotationPrepared = false;
+            this.player = GameManager.currentPlayer;
+            snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
+        }
+    }
+
+    private float MapAngle(float angle)
+    {
+        if (angle >= 180)
+        {
+            return angle - 360;
+        }
+        return angle;
     }
 
 }

@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
         tak = new Tak(boardData);
         ui.InitalizeBoard(Settings.dimension);
         StackItUp();
-        Invoke("Commute", 11);
+        Invoke("Commute", 5);
     }
 
     // Update is called once per frame
@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
 
     void StackItUp()
     {
-        int pieces = 10;
+        int pieces = 4;
         float time = 1f;
         for (int i = 0; i < pieces; i++)
         {
@@ -58,7 +58,23 @@ public class GameManager : MonoBehaviour
     {
         List<Jump> jumps = new List<Jump>();
         jumps.Add(new Jump(0, new Tile(2, 2), new Tile(2, 1)));
+        //DoCommute(new Commute(jumps));
         ui.DoCommute(new Commute(jumps));
+        currentPlayer = 2;
+    }
+
+    void DoCommute(Commute commute)
+    {
+        int i = 0;
+        ui.DoJump(commute.jumps[0]);
+        void Jump() {
+            if (i < commute.jumps.Count - 1)
+            {
+                i++;
+                ui.DoJump(commute.jumps[i]);
+            }
+        }
+        PieceUI.jumpCompleted += Jump;
     }
 
 }

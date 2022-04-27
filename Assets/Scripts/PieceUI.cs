@@ -12,6 +12,7 @@ public class PieceUI : MonoBehaviour
     private bool isCommuting;
     public Vector3 origin;
     public Vector3 destination;
+    public GameObject destinationTile;
     private Vector3 spawnRotationAxis;
     private float spawnRPS;
     public float spawnTime;
@@ -20,6 +21,10 @@ public class PieceUI : MonoBehaviour
 
     Rigidbody rb;
     bool isGrounded;
+
+    public delegate void JumpCompletion();
+    public static event JumpCompletion jumpCompleted;
+    public bool isEmitter = false;
 
     public PieceUI(PieceType type, int player)
     {
@@ -91,17 +96,19 @@ public class PieceUI : MonoBehaviour
             else
             {
                 this.isCommuting = false;
+                this.transform.SetParent(destinationTile.transform);
             }
             
         }
     }
 
-    public void SetCommute(Vector3 destination)
+    public void SetCommute(Vector3 destination, GameObject tile)
     {
         this.isCommuting = true;
         this.origin = this.transform.position;
         this.destination = destination;
         this.rb.isKinematic = false;
+        this.destinationTile = tile;
     }
 
     float GetVerticalImpulse(float height, float mass)
@@ -122,8 +129,11 @@ public class PieceUI : MonoBehaviour
         {
             this.rb.isKinematic = true;
             this.transform.position = this.destination;
+            if (this.isEmitter)
+            {
+                jumpCompleted();
+            }
         }
-        Debug.Log("Hit");
     }
 
     private void ToggleRb()
