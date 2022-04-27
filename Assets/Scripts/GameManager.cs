@@ -28,7 +28,9 @@ public class GameManager : MonoBehaviour
         tak = new Tak(boardData);
         ui.InitalizeBoard(Settings.dimension);
         StackItUp();
-        Invoke("Commute", 5);
+        Invoke("Commute1", 12);
+        Invoke("Commute2", 14);
+        Invoke("Commute3", 16);
     }
 
     // Update is called once per frame
@@ -39,7 +41,7 @@ public class GameManager : MonoBehaviour
 
     void StackItUp()
     {
-        int pieces = 4;
+        int pieces = 10;
         float time = 1f;
         for (int i = 0; i < pieces; i++)
         {
@@ -54,13 +56,31 @@ public class GameManager : MonoBehaviour
         tak.DoPlacement(new Placement(player, PieceType.STONE, new Tile(2, 2)));
     }
 
-    void Commute()
+    void Commute1()
     {
         List<Jump> jumps = new List<Jump>();
         jumps.Add(new Jump(0, new Tile(2, 2), new Tile(2, 1)));
         //DoCommute(new Commute(jumps));
         ui.DoCommute(new Commute(jumps));
-        currentPlayer = 2;
+        //currentPlayer = 2;
+    }
+
+    void Commute2()
+    {
+        List<Jump> jumps = new List<Jump>();
+        jumps.Add(new Jump(0, new Tile(2, 1), new Tile(1, 1)));
+        //DoCommute(new Commute(jumps));
+        ui.DoCommute(new Commute(jumps));
+        //currentPlayer = 2;
+    }
+
+    void Commute3()
+    {
+        List<Jump> jumps = new List<Jump>();
+        jumps.Add(new Jump(0, new Tile(1, 1), new Tile(1, 2)));
+        //DoCommute(new Commute(jumps));
+        ui.DoCommute(new Commute(jumps));
+        //currentPlayer = 2;
     }
 
     void DoCommute(Commute commute)

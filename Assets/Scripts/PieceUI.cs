@@ -84,7 +84,9 @@ public class PieceUI : MonoBehaviour
         }
         else if (this.isCommuting)
         {
-            if(this.transform.position.x != this.destination.x)
+            this.rb.isKinematic = false;
+
+            if (this.transform.position.x != this.destination.x)
             {
                 if (this.isGrounded)
                 {
@@ -96,6 +98,7 @@ public class PieceUI : MonoBehaviour
             else
             {
                 this.isCommuting = false;
+                this.transform.position = this.destination;
                 this.transform.SetParent(destinationTile.transform);
             }
             
@@ -124,11 +127,13 @@ public class PieceUI : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        Debug.Log(collision);
         this.isGrounded = true;
         if (this.isCommuting)
         {
-            this.rb.isKinematic = true;
+            //this.rb.isKinematic = true;
             this.transform.position = this.destination;
+            this.rb.isKinematic = true;
             if (this.isEmitter)
             {
                 jumpCompleted();
