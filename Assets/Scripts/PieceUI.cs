@@ -9,7 +9,7 @@ public class PieceUI : MonoBehaviour
     UI ui;
 
     private bool isBeingSpawned;
-    private bool isCommuting;
+    public bool isCommuting;
     public Vector3 origin;
     public Vector3 destination;
     public GameObject destinationTile;
@@ -19,12 +19,8 @@ public class PieceUI : MonoBehaviour
 
     float t = 0;
 
-    Rigidbody rb;
+    public Rigidbody rb;
     bool isGrounded;
-
-    public delegate void JumpCompletion();
-    public static event JumpCompletion jumpCompleted;
-    public bool isEmitter = false;
 
     public PieceUI(PieceType type, int player)
     {
@@ -78,7 +74,7 @@ public class PieceUI : MonoBehaviour
             else
             {
                 this.isBeingSpawned = false;
-                this.ToggleRb();
+                this.rb.isKinematic = false;
                 t = 0;
             }
         }
@@ -127,22 +123,11 @@ public class PieceUI : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log(collision);
         this.isGrounded = true;
         if (this.isCommuting)
         {
-            //this.rb.isKinematic = true;
             this.transform.position = this.destination;
             this.rb.isKinematic = true;
-            if (this.isEmitter)
-            {
-                jumpCompleted();
-            }
         }
-    }
-
-    private void ToggleRb()
-    {
-        this.rb.isKinematic = !this.rb.isKinematic;
     }
 }

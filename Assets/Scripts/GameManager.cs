@@ -27,10 +27,6 @@ public class GameManager : MonoBehaviour
         }
         tak = new Tak(boardData);
         ui.InitalizeBoard(Settings.dimension);
-        StackItUp();
-        Invoke("Commute1", 12);
-        Invoke("Commute2", 14);
-        Invoke("Commute3", 16);
     }
 
     // Update is called once per frame
@@ -39,62 +35,23 @@ public class GameManager : MonoBehaviour
 
     }
 
-    void StackItUp()
+    public void DoPlacement(Placement placement)
     {
-        int pieces = 10;
-        float time = 1f;
-        for (int i = 0; i < pieces; i++)
-        {
-            Invoke("PlacePiece", time * i);
-        }
+        tak.DoPlacement(placement);
+        ui.DoPlacement(placement);
+        this.NextPlayer();
     }
 
-    void PlacePiece()
+    public void DoCommute(Commute commute)
     {
-        int player = Random.Range(1, 3);
-        ui.DoPlacement(new Placement(player, PieceType.STONE, new Tile(2, 2)));
-        tak.DoPlacement(new Placement(player, PieceType.STONE, new Tile(2, 2)));
+        ui.DoCommute(commute);
+        tak.DoCommute(commute);
+        this.NextPlayer();
     }
 
-    void Commute1()
+    void NextPlayer()
     {
-        List<Jump> jumps = new List<Jump>();
-        jumps.Add(new Jump(0, new Tile(2, 2), new Tile(2, 1)));
-        //DoCommute(new Commute(jumps));
-        ui.DoCommute(new Commute(jumps));
-        //currentPlayer = 2;
-    }
-
-    void Commute2()
-    {
-        List<Jump> jumps = new List<Jump>();
-        jumps.Add(new Jump(0, new Tile(2, 1), new Tile(1, 1)));
-        //DoCommute(new Commute(jumps));
-        ui.DoCommute(new Commute(jumps));
-        //currentPlayer = 2;
-    }
-
-    void Commute3()
-    {
-        List<Jump> jumps = new List<Jump>();
-        jumps.Add(new Jump(0, new Tile(1, 1), new Tile(1, 2)));
-        //DoCommute(new Commute(jumps));
-        ui.DoCommute(new Commute(jumps));
-        //currentPlayer = 2;
-    }
-
-    void DoCommute(Commute commute)
-    {
-        int i = 0;
-        ui.DoJump(commute.jumps[0]);
-        void Jump() {
-            if (i < commute.jumps.Count - 1)
-            {
-                i++;
-                ui.DoJump(commute.jumps[i]);
-            }
-        }
-        PieceUI.jumpCompleted += Jump;
+        currentPlayer = currentPlayer == 1 ? 2 : 1;
     }
 
 }

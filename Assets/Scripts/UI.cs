@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+//using System;
 
 public class UI : MonoBehaviour
 {
@@ -7,23 +9,14 @@ public class UI : MonoBehaviour
 
     public float pieceSpawnHeight;
 
-    [SerializeField] private GameObject stone;
-    [SerializeField] private GameObject blocker;
-    [SerializeField] private GameObject capstone;
+    public GameObject stone;
+    public GameObject blocker;
+    public GameObject capstone;
 
     public Material black;
     public Material white;
 
     // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     public void InitalizeBoard(int dimension)
     {
@@ -44,7 +37,7 @@ public class UI : MonoBehaviour
                 tile.transform.SetParent(gameBoard.transform);
                 tile.AddComponent<cakeslice.Outline>();
 
-                tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? this.black : this.white;
+                tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? black : white;
 
                 tilePosition.x += Settings.tileDimensions.x;
             }
@@ -63,23 +56,23 @@ public class UI : MonoBehaviour
         int tileNum = Utils.IndexToNum(row, col);
         GameObject tile = GameObject.Find("Board/Tile_" + tileNum);
 
-        GameObject objToSpawn = this.stone;
+        GameObject objToSpawn = stone;
         float pieceHeight = 0;
         if (placement.piece == PieceType.STONE)
         {
-            objToSpawn = this.stone;
+            objToSpawn = stone;
             this.pieceSpawnHeight = Settings.stoneSpawnHeight;
             pieceHeight = objToSpawn.transform.localScale.y;
         }
         else if (placement.piece == PieceType.BLOCKER)
         {
-            objToSpawn = this.blocker;
+            objToSpawn = blocker;
             this.pieceSpawnHeight = Settings.blockerSpawnHeight;
             pieceHeight = objToSpawn.transform.localScale.x;
         }
         else if (placement.piece == PieceType.CAPSTONE)
         {
-            objToSpawn = this.capstone;
+            objToSpawn = capstone;
             this.pieceSpawnHeight = Settings.capstoneSpawnHeight;
             pieceHeight = objToSpawn.transform.localScale.y * 2;
         }
@@ -96,32 +89,25 @@ public class UI : MonoBehaviour
 
     public void DoCommute(Commute commute)
     {
-        foreach (var jump in commute.jumps) 
+        StartCoroutine(StartCommute(commute));
+    }
+
+    public IEnumerator StartCommute(Commute commute)
+    {
+        foreach (var jump in commute.jumps)
         {
             GameObject tile = Utils.GetUITile(jump.origin);
-            for (int i = 0; i < tile.transform.childCount - jump.cutoff; i++)
+            for (int i = jump.cutoff; i < tile.transform.childCount; i++)
             {
                 GameObject endStack = Utils.GetUITile(jump.destination);
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(stone)) / 2) * Vector3.up + (i * GetPieceHeight(stone)) * Vector3.up;
                 tile.transform.GetChild(i).GetComponent<PieceUI>().SetCommute(endPosition, endStack);
             }
-   
-        }
-    }
-
-    public void DoJump(Jump jump)
-    {
-        GameObject tile = Utils.GetUITile(jump.origin);
-        for (int i = jump.cutoff; i < tile.transform.childCount; i++)
-        {
-            if (i == tile.transform.childCount)
-            {
-                tile.transform.GetChild(i).GetComponent<PieceUI>().isEmitter = true;
-            }
-            GameObject endStack = Utils.GetUITile(jump.destination);
-            Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(stone)) / 2) * Vector3.up + (i * GetPieceHeight(stone)) * Vector3.up;
-            tile.transform.GetChild(i).GetComponent<PieceUI>().SetCommute(endPosition, endStack);
-            tile.transform.GetChild(i).SetParent(endStack.transform);
+            //Func<bool> Done = new Func<bool>(() => JumpIsDone(jump));
+            //yield return new WaitUntil(Done);
+            //Func<bool> M = new Func<bool>(() => Migrated(jump));
+            //yield return new WaitUntil(M);
+            yield return new WaitForSeconds(2);
         }
     }
 
@@ -130,8 +116,40 @@ public class UI : MonoBehaviour
         PieceType pieceType = piece.GetComponent<PieceUI>().type;
         if (pieceType == PieceType.CAPSTONE)
         {
-            return this.capstone.transform.localScale.y * 2;
+            return capstone.transform.localScale.y * 2;
         }
-        return this.stone.transform.localScale.y;
+        return stone.transform.localScale.y;
     }
+
+    //private bool JumpIsDone(Jump jump)
+    //{
+    //    GameObject tile = Utils.GetUITile(jump.origin);
+    //    for (int i = jump.cutoff; i < tile.transform.childCount; i++)
+    //    {
+    //        //GameObject endStack = Utils.GetUITile(jump.destination);
+    //        PieceUI pieceData = tile.transform.GetChild(i).GetComponent<PieceUI>();
+    //        if (pieceData.isCommuting)
+    //        {
+    //            Debug.Log("Still commuting");
+    //            return false;
+    //        }
+    //    }
+    //    return true;
+    //}
+
+    //private bool Migrated(Jump jump)
+    //{
+    //    GameObject tile = Utils.GetUITile(jump.destination);
+    //    for (int i = jump.cutoff; i < tile.transform.childCount; i++)
+    //    {
+    //        //GameObject endStack = Utils.GetUITile(jump.destination);
+    //        PieceUI pieceData = tile.transform.GetChild(i).GetComponent<PieceUI>();
+    //        if (!pieceData.transform.IsChildOf(tile.transform))
+    //        {
+    //            Debug.Log("Not migrated");
+    //            return false;
+    //        }
+    //    }
+    //    return true;
+    //}
 }

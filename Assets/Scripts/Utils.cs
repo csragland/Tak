@@ -12,6 +12,11 @@ public static class Utils
         return rowIndex * Settings.dimension + colIndex;
     }
 
+    public static Tile NumToTile(int num)
+    {
+        return new Tile((int) Mathf.Floor(num / Settings.dimension), num % Settings.dimension);
+    }
+
     public static GameObject GetUITile(Tile tile)
     {
         return GameObject.Find("Board/Tile_" + IndexToNum(tile.row, tile.col));

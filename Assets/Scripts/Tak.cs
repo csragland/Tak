@@ -4,6 +4,10 @@ using System.Collections.Generic;
 public class Tak
 {
     public List<Piece>[,] board;
+
+    public int[,] piecesSpawned = new int[,] { {0, 0}, {0, 0} };
+
+    public int[] maxPieces = new int[] { 17, 1 };
     
     public Tak(List<Piece>[,] takBoard)
     {
@@ -49,6 +53,8 @@ public class Tak
         {
             Piece piece = new Piece(move.piece, move.player);
             this.board[move.destination.row, move.destination.col].Add(piece);
+            int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
+            this.piecesSpawned[move.player - 1, pieceIndex] += 1;
         }
     }
 
@@ -76,7 +82,8 @@ public class Tak
 
     private bool IsLegalMove(Placement move)
     {
-        return this.board[move.destination.row, move.destination.col].Count == 0;
+        int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
+        return this.board[move.destination.row, move.destination.col].Count == 0 && piecesSpawned[move.player - 1, pieceIndex] < maxPieces[pieceIndex];
     }
 
     private bool IsLegalMove(Commute move)

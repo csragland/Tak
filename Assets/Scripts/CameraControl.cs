@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class CameraControl : MonoBehaviour
 {
+    public GameManager gameManager;
 
     float horizontalInput;
     float verticalInput;
@@ -27,11 +28,16 @@ public class CameraControl : MonoBehaviour
     Quaternion endRotation;
     bool rotationPrepared;
 
+    public bool boarding = true;
+    PieceUI[] commuters = new PieceUI[5];
+    Tile[] dropoffs = new Tile[5];
+
     // Start is called before the first frame update
     void Start()
     {
         Camera.main.transform.position = Settings.cameraOffset;
         player = GameManager.currentPlayer;
+        gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
         snapEnd = Quaternion.Euler(0, 0, 0);
         
     }
@@ -98,101 +104,72 @@ public class CameraControl : MonoBehaviour
         Event e = Event.current;
         if (e.type == EventType.KeyDown && player == GameManager.currentPlayer)
         {
-            // I can maybe make a function to map between quadrants and buttons (with matrices?)
-            if (((e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
-                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
-                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GTE, 135, true)))
-                && !(currentTileId % Settings.dimension == Settings.dimension - 1))
+
+            this.CheckArrowOver(e);
+
+            if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
             {
-                this.Unfocus(currentTileId);
-                currentTileId++;
-                this.SetFocus(currentTileId);
+                gameManager.DoPlacement(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
             }
-            if (((e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
-                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
-                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GTE, 135, true)))
-                && !(currentTileId % Settings.dimension == 0))
+            else if (e.keyCode == KeyCode.Alpha2 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId))))
             {
-                this.Unfocus(currentTileId);
-                currentTileId--;
-                this.SetFocus(currentTileId);
+                gameManager.DoPlacement(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId)));
             }
-            if (((e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
-                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
-                || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GTE, 135, true)))
-                && !(currentTileId < Settings.dimension))
+            else if (e.keyCode == KeyCode.Alpha3 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId))))
             {
-                this.Unfocus(currentTileId);
-                currentTileId -= Settings.dimension;
-                this.SetFocus(currentTileId);
+                gameManager.DoPlacement(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
             }
-            if (((e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LTE, 45, true))
-                || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
-                || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
-                || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GTE, 135, true)))
-                && !(currentTileId >= Settings.dimension * (Settings.dimension - 1)))
-            {
-                this.Unfocus(currentTileId);
-                currentTileId += Settings.dimension;
-                this.SetFocus(currentTileId);
-            }
+        }
+
+        if (e.type == EventType.MouseDown)
+        {
+            
         }
     }
 
-    private bool CompareRotations(Comparisons operation, float rotation, bool abs=false)
+    private void CheckArrowOver(Event e)
     {
-        if (operation == Comparisons.LT)
+        // I can maybe make a function to map between quadrants and buttons (with matrices?)
+        if (((e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LTE, 45, true))
+            || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+            || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+            || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GTE, 135, true)))
+            && !(currentTileId % Settings.dimension == Settings.dimension - 1))
         {
-            if (!abs)
-            {
-                return MapAngle(this.transform.eulerAngles.y) < rotation;
-
-            }
-            else
-            {
-                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) < rotation;
-            }
+            this.Unfocus(currentTileId);
+            currentTileId++;
+            this.SetFocus(currentTileId);
         }
-        if (operation == Comparisons.LTE)
+        if (((e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LTE, 45, true))
+            || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+            || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+            || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GTE, 135, true)))
+            && !(currentTileId % Settings.dimension == 0))
         {
-            if (!abs)
-            {
-                return MapAngle(this.transform.eulerAngles.y) <= rotation;
-
-            }
-            else
-            {
-                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) <= rotation;
-            }
+            this.Unfocus(currentTileId);
+            currentTileId--;
+            this.SetFocus(currentTileId);
         }
-        if (operation == Comparisons.GTE)
+        if (((e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.LTE, 45, true))
+            || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+            || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+            || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.GTE, 135, true)))
+            && !(currentTileId < Settings.dimension))
         {
-            if (!abs)
-            {
-                return MapAngle(this.transform.eulerAngles.y) >= rotation;
-
-            }
-            else
-            {
-                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) >= rotation;
-            }
+            this.Unfocus(currentTileId);
+            currentTileId -= Settings.dimension;
+            this.SetFocus(currentTileId);
         }
-        if (operation == Comparisons.GT)
+        if (((e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LTE, 45, true))
+            || (e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
+            || (e.keyCode == KeyCode.LeftArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
+            || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GTE, 135, true)))
+            && !(currentTileId >= Settings.dimension * (Settings.dimension - 1)))
         {
-            if (!abs)
-            {
-                return MapAngle(this.transform.eulerAngles.y) > rotation;
-
-            }
-            else
-            {
-                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) > rotation;
-            }
+            this.Unfocus(currentTileId);
+            currentTileId += Settings.dimension;
+            this.SetFocus(currentTileId);
         }
-        return false;
     }
 
     private void SetFocus(int tileId)
@@ -269,6 +246,59 @@ public class CameraControl : MonoBehaviour
             this.player = GameManager.currentPlayer;
             snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
         }
+    }
+
+    private bool CompareRotations(Comparisons operation, float rotation, bool abs = false)
+    {
+        if (operation == Comparisons.LT)
+        {
+            if (!abs)
+            {
+                return MapAngle(this.transform.eulerAngles.y) < rotation;
+
+            }
+            else
+            {
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) < rotation;
+            }
+        }
+        if (operation == Comparisons.LTE)
+        {
+            if (!abs)
+            {
+                return MapAngle(this.transform.eulerAngles.y) <= rotation;
+
+            }
+            else
+            {
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) <= rotation;
+            }
+        }
+        if (operation == Comparisons.GTE)
+        {
+            if (!abs)
+            {
+                return MapAngle(this.transform.eulerAngles.y) >= rotation;
+
+            }
+            else
+            {
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) >= rotation;
+            }
+        }
+        if (operation == Comparisons.GT)
+        {
+            if (!abs)
+            {
+                return MapAngle(this.transform.eulerAngles.y) > rotation;
+
+            }
+            else
+            {
+                return Mathf.Abs(MapAngle(this.transform.eulerAngles.y)) > rotation;
+            }
+        }
+        return false;
     }
 
     private float MapAngle(float angle)
