@@ -121,7 +121,17 @@ public class CameraControl : MonoBehaviour
                 gameManager.DoPlacement(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
             }
 
-
+            else if (e.keyCode == KeyCode.Space)
+            {
+                Debug.Log("Here");
+                Commute commute = this.BuildCommute(Utils.NumToTile(this.currentTileId));
+                if (gameManager.tak.IsLegalMove(commute))
+                {
+                    Debug.Log("legal");
+                    gameManager.DoCommute(commute);
+                    this.commuters.Clear();
+                }
+            }
         }
     }
 
@@ -241,6 +251,7 @@ public class CameraControl : MonoBehaviour
         {
             zoomPrepared = false;
             rotationPrepared = false;
+            this.commuters.Clear();
             this.player = GameManager.currentPlayer;
             snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
         }
@@ -352,6 +363,27 @@ public class CameraControl : MonoBehaviour
             return crown.GetComponent<PieceUI>().player == GameManager.currentPlayer;
         }
         return false;
+    }
+
+    private Commute BuildCommute(Tile end)
+    {
+        List<Jump> jumps = new List<Jump>();
+        Tile start = Utils.NumToTile(this.commuters[0].transform.parent.GetSiblingIndex());
+        int[] direction = new int[] { (end.row - start.row) / this.commuters.Count, (end.col - start.col) / this.commuters.Count };
+        int totalDistance = Utils.OneNorm(direction);
+        Tile startTile = start;
+        for (int i = 1; i <= this.commuters.Count; i++)
+        {
+            int baseIndex = this.commuters[i - 1].transform.GetSiblingIndex();
+            Tile endTile = new Tile(start.row + direction[0] * i, start.col + direction[1] * i);
+            jumps.Add(new Jump(baseIndex, startTile, endTile));
+            startTile = endTile;
+        }
+        foreach (var jump in jumps)
+        {
+            Debug.Log(jump.cutoff + " " + jump.origin + " " + jump.destination);
+        }
+        return new Commute(this.player, jumps);
     }
 
 }

@@ -28,6 +28,11 @@ public class Tile
         this.row = rowNumber;
         this.col = columnNumber;
     }
+
+    public override string ToString()
+    {
+        return "[" + this.row + ", " + this.col + "]";
+    }
 }
 
 public class Jump
@@ -72,8 +77,9 @@ public class Commute : Move
 {
     public List<Jump> jumps;
 
-    public Commute(List<Jump> path)
+    public Commute(int playerNumber, List<Jump> path)
     {
+        this.player = playerNumber;
         this.jumps = path;
         this.destination = path[path.Count - 1].destination;
     }

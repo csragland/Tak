@@ -84,7 +84,7 @@ public class UI : MonoBehaviour
         pieceObj.transform.SetParent(tile.transform);
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();
-        pieceData.destination = tile.transform.position + ((Settings.tileDimensions.y + pieceHeight) / 2) * Vector3.up + ((tile.transform.childCount - 1) * pieceHeight) * Vector3.up;
+        pieceData.destination = tile.transform.position + ((Settings.tileDimensions.y + pieceHeight) / 2) * Vector3.up + ((tile.transform.childCount) * pieceHeight) * Vector3.up;
         pieceData.type = placement.piece; pieceData.player = placement.player;
     }
 
@@ -100,9 +100,11 @@ public class UI : MonoBehaviour
             GameObject tile = Utils.GetUITile(jump.origin);
             for (int i = jump.cutoff; i < tile.transform.childCount; i++)
             {
+                PieceUI piece = tile.transform.GetChild(i).GetComponent<PieceUI>();
                 GameObject endStack = Utils.GetUITile(jump.destination);
-                Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(stone)) / 2) * Vector3.up + (i * GetPieceHeight(stone)) * Vector3.up;
-                tile.transform.GetChild(i).GetComponent<PieceUI>().SetCommute(endPosition, endStack);
+                Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (i * GetPieceHeight(stone) + (tile.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
+                Debug.Log(endPosition);
+                piece.SetCommute(endPosition, endStack);
             }
             //Func<bool> Done = new Func<bool>(() => JumpIsDone(jump));
             //yield return new WaitUntil(Done);

@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Tak
 {
@@ -73,7 +75,7 @@ public class Tak
     {
         List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
         List<Piece> endStack = this.board[jump.destination.row, jump.destination.col];
-        while (startStack.Count - jump.cutoff >= 0)
+        while (startStack.Count - jump.cutoff > 0)
         {
             endStack.Add(startStack[jump.cutoff]);
             startStack.RemoveAt(jump.cutoff);
@@ -89,8 +91,12 @@ public class Tak
     private bool IsLegalMove(Commute move)
     {
         int[] direction = move.jumps[0].GetDirection();
+        Piece startCrown = GetCrown(move.jumps[0].origin);
+
+
         if (Utils.OneNorm(direction) != 1)
         {
+            Debug.Log("1");
             return false;
         }
 
@@ -98,35 +104,45 @@ public class Tak
         {
             Jump jump = move.jumps[i];
 
-            if (jump.GetDirection() != direction)
+            if (!jump.GetDirection().SequenceEqual(direction))
             {
                 return false;
             }
 
             List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
-            if (startStack.Count == 0)
+            if (i == 0 && startStack.Count == 0)
             {
+                Debug.Log("3");
                 return false;
             }
 
             if ((jump.cutoff < 1 && i > 0) || startStack.Count - jump.cutoff > Settings.dimension)
             {
+                Debug.Log("4");
                 return false;
             }
 
-            Piece startCrown = GetCrown(jump.origin);
-            if (startCrown.player != move.player)
+            if (i == 0 && startCrown.player != move.player)
             {
+                Debug.Log("5");
+                Debug.Log(startCrown.player + " vs " + move.player);
                 return false;
+            }
+
+            if (this.board[jump.destination.row, jump.destination.col].Count == 0)
+            {
+                continue;
             }
 
             Piece endCrown = this.GetCrown(jump.destination);
             if (endCrown.type == PieceType.CAPSTONE)
             {
+                Debug.Log("6");
                 return false;
             }
             if (endCrown.type == PieceType.BLOCKER && !(startCrown.type == PieceType.CAPSTONE && jump.cutoff == startStack.Count - 1))
             {
+                Debug.Log("7");
                 return false;
             }
         }
