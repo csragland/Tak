@@ -80,6 +80,7 @@ public class UI : MonoBehaviour
         Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
 
         GameObject pieceObj = Instantiate(objToSpawn, spawnPos, objToSpawn.transform.rotation);
+        pieceObj.name = tile.transform.childCount.ToString();
         pieceObj.transform.SetParent(tile.transform);
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();

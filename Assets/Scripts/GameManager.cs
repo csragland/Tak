@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -35,10 +36,16 @@ public class GameManager : MonoBehaviour
 
     }
 
-    public void DoPlacement(Placement placement)
+    public void DoPlacement(Placement move)
+    {
+        StartCoroutine(PlacePiece(move));
+    }
+
+    private IEnumerator PlacePiece(Placement placement)
     {
         tak.DoPlacement(placement);
         ui.DoPlacement(placement);
+        yield return new WaitForSeconds(GetSpawnTime(placement) + Settings.spawnCooldown);
         this.NextPlayer();
     }
 
@@ -52,6 +59,19 @@ public class GameManager : MonoBehaviour
     void NextPlayer()
     {
         currentPlayer = currentPlayer == 1 ? 2 : 1;
+    }
+
+    private float GetSpawnTime(Placement placement)
+    {
+        if (placement.piece == PieceType.STONE)
+        {
+            return Settings.stoneSpawnTime;
+        }
+        else if (placement.piece == PieceType.BLOCKER)
+        {
+            return Settings.blockerSpawnTime;
+        }
+        return Settings.capstoneSpawnTime;
     }
 
 }

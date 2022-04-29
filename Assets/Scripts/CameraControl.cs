@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class CameraControl : MonoBehaviour
 {
@@ -28,9 +29,9 @@ public class CameraControl : MonoBehaviour
     Quaternion endRotation;
     bool rotationPrepared;
 
-    public bool boarding = true;
-    PieceUI[] commuters = new PieceUI[5];
-    Tile[] dropoffs = new Tile[5];
+    public bool isBoarding = true;
+    List<GameObject> commuters = new List<GameObject>();
+    Tile commuteEnd;
 
     // Start is called before the first frame update
     void Start()
@@ -107,7 +108,7 @@ public class CameraControl : MonoBehaviour
 
             this.CheckArrowOver(e);
 
-            if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
+            if (e.keyCode == KeyCode.Alpha1 /*&& gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)))*/)
             {
                 gameManager.DoPlacement(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
             }
@@ -119,11 +120,8 @@ public class CameraControl : MonoBehaviour
             {
                 gameManager.DoPlacement(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
             }
-        }
 
-        if (e.type == EventType.MouseDown)
-        {
-            
+
         }
     }
 
@@ -215,8 +213,8 @@ public class CameraControl : MonoBehaviour
         if (!zoomPrepared)
         {
             t1 = 0;
-            startDist = Vector3.Magnitude(Settings.cameraOffset);
-            currentDist = Vector3.Magnitude(Camera.main.transform.position);
+            startDist = Vector3.Distance(Settings.cameraOffset, Settings.location);
+            currentDist = (Vector3.Distance(Camera.main.transform.position, this.transform.position));
             startZoom = Camera.main.transform.position;
             zoomDestination = Camera.main.transform.position + (currentDist - startDist) * Camera.main.transform.forward;
             zoomPrepared = true;
@@ -229,22 +227,56 @@ public class CameraControl : MonoBehaviour
             rotationPrepared = true;
         }
 
-        if (Mathf.Round(Vector3.Magnitude(Camera.main.transform.position)) != Mathf.Round(startDist))
+        if (Mathf.Round(Vector3.Distance(Camera.main.transform.position, this.transform.position)) != Mathf.Round(startDist))
         {
             t1 += Time.deltaTime / Settings.cameraTransitionTime;
             Camera.main.transform.position = Vector3.Lerp(startZoom, zoomDestination, t1);
         }
         else if (this.transform.rotation.eulerAngles.y != endRotation.eulerAngles.y)
         {
-            zoomPrepared = false;
             t2 += Time.deltaTime / Settings.cameraTransitionTime;
             this.transform.rotation = Quaternion.Lerp(startRotation, endRotation, t2);
         }
         else
         {
+            zoomPrepared = false;
             rotationPrepared = false;
             this.player = GameManager.currentPlayer;
             snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
+        }
+    }
+
+    // I only need list of pieces and one destination tile (If the rules are to be followed)
+    public void ProcessClick(GameObject clicked)
+    {
+        Transform parent = clicked.transform.parent;
+        if (this.isBoarding && clicked.transform.IsChildOf(Utils.GetUITile(Utils.NumToTile(currentTileId)).transform) && this.IsPlayerContolled(parent.gameObject))
+        {
+            if (this.commuters.Count == 0 || (clicked.transform.IsChildOf(commuters[commuters.Count - 1].transform.parent) && commuters.Count <= Settings.dimension) && !this.commuters.Contains(clicked))
+            {
+                commuters.Add(clicked);
+                for (int i = 0; i <= clicked.transform.GetSiblingIndex(); i++)
+                {
+                    parent.GetChild(i).GetComponent<cakeslice.Outline>().enabled = false;
+                }
+            }
+            else if (this.commuters.Contains(clicked))
+            {
+                int index = this.commuters.IndexOf(clicked);
+                int stackIndex = parent.childCount - 1;
+                int bottomIndex = index < 1 ? 0 : commuters[index - 1].transform.GetSiblingIndex();
+                do
+                {
+                    parent.GetChild(stackIndex).GetComponent<cakeslice.Outline>().enabled = true;
+                    stackIndex--;
+
+                } while (stackIndex >= bottomIndex);
+
+                for (int i = this.commuters.Count - 1; i >= index; i--)
+                {
+                    this.commuters.RemoveAt(i);
+                }
+            }
         }
     }
 
@@ -308,6 +340,18 @@ public class CameraControl : MonoBehaviour
             return angle - 360;
         }
         return angle;
+    }
+
+    private bool IsPlayerContolled(GameObject tile)
+    {
+        int numChildren = tile.transform.childCount;
+        if (tile.transform.childCount > 0)
+        {
+            GameObject crown = tile.transform.GetChild(numChildren - 1).gameObject;
+            this.transform.position = crown.transform.position;
+            return crown.GetComponent<PieceUI>().player == GameManager.currentPlayer;
+        }
+        return false;
     }
 
 }
