@@ -108,7 +108,7 @@ public class CameraControl : MonoBehaviour
 
             this.CheckArrowOver(e);
 
-            if (e.keyCode == KeyCode.Alpha1 /*&& gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)))*/)
+            if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
             {
                 gameManager.DoPlacement(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
             }
@@ -123,11 +123,9 @@ public class CameraControl : MonoBehaviour
 
             else if (e.keyCode == KeyCode.Space)
             {
-                Debug.Log("Here");
                 Commute commute = this.BuildCommute(Utils.NumToTile(this.currentTileId));
                 if (gameManager.tak.IsLegalMove(commute))
                 {
-                    Debug.Log("legal");
                     gameManager.DoCommute(commute);
                     this.commuters.Clear();
                 }
@@ -372,16 +370,19 @@ public class CameraControl : MonoBehaviour
         int[] direction = new int[] { (end.row - start.row) / this.commuters.Count, (end.col - start.col) / this.commuters.Count };
         int totalDistance = Utils.OneNorm(direction);
         Tile startTile = start;
+        int baseAdjustment = 0;
         for (int i = 1; i <= this.commuters.Count; i++)
         {
-            int baseIndex = this.commuters[i - 1].transform.GetSiblingIndex();
+            int baseIndex = this.commuters[i - 1].transform.GetSiblingIndex() - baseAdjustment;
+            //Debug.Log(baseIndex);
+            baseAdjustment = this.commuters[i - 1].transform.GetSiblingIndex();
             Tile endTile = new Tile(start.row + direction[0] * i, start.col + direction[1] * i);
             jumps.Add(new Jump(baseIndex, startTile, endTile));
             startTile = endTile;
         }
-        foreach (var jump in jumps)
+        foreach (var item in jumps)
         {
-            Debug.Log(jump.cutoff + " " + jump.origin + " " + jump.destination);
+            //Debug.Log(item.cutoff + " " + item.origin + " " + item.destination);
         }
         return new Commute(this.player, jumps);
     }

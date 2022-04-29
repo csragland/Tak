@@ -20,13 +20,13 @@ public static class Settings
 
     [Header("Stone Settings")]
     public static readonly float stoneRPS = 1.5f;
-    public static readonly float stoneSpawnTime = 1.5f;
-    public static readonly float stoneSpawnHeight = 6;
+    public static readonly float stoneSpawnTime = 1f;
+    public static readonly float stoneSpawnHeight = 4;
 
     [Header("Blocker Settings")]
     public static readonly float blockerRPS = 1.5f;
-    public static readonly float blockerSpawnTime = 1.5f;
-    public static readonly float blockerSpawnHeight = 6;
+    public static readonly float blockerSpawnTime = 1f;
+    public static readonly float blockerSpawnHeight = 4;
 
     [Header("Capstone Settings")]
     public static readonly float capstoneRPS = 0;

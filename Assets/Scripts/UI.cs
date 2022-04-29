@@ -98,12 +98,13 @@ public class UI : MonoBehaviour
         foreach (var jump in commute.jumps)
         {
             GameObject tile = Utils.GetUITile(jump.origin);
+            GameObject endStack = Utils.GetUITile(jump.destination);
             for (int i = jump.cutoff; i < tile.transform.childCount; i++)
             {
                 PieceUI piece = tile.transform.GetChild(i).GetComponent<PieceUI>();
-                GameObject endStack = Utils.GetUITile(jump.destination);
-                Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (i * GetPieceHeight(stone) + (tile.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
-                Debug.Log(endPosition);
+                //Debug.Log((endStack.transform.childCount) * this.GetPieceHeight(stone));
+                Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (i * GetPieceHeight(stone) + (endStack.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
+                //Debug.Log(endPosition);
                 piece.SetCommute(endPosition, endStack);
             }
             //Func<bool> Done = new Func<bool>(() => JumpIsDone(jump));
