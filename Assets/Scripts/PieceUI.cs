@@ -85,7 +85,7 @@ public class PieceUI : MonoBehaviour
         {
             this.rb.isKinematic = false;
 
-            if (this.transform.position.x != this.destination.x)
+            if (this.transform.position != this.destination)
             {
                 if (this.isGrounded)
                 {

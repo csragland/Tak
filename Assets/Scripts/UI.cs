@@ -8,6 +8,7 @@ public class UI : MonoBehaviour
     public GameObject gameBoard;
 
     public float pieceSpawnHeight;
+    public float pieceNum = 0;
 
     public GameObject stone;
     public GameObject blocker;
@@ -80,7 +81,8 @@ public class UI : MonoBehaviour
         Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
 
         GameObject pieceObj = Instantiate(objToSpawn, spawnPos, objToSpawn.transform.rotation);
-        pieceObj.name = tile.transform.childCount.ToString();
+        pieceObj.name = pieceNum.ToString();
+        pieceNum++;
         pieceObj.transform.SetParent(tile.transform);
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();

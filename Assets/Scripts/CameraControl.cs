@@ -31,7 +31,6 @@ public class CameraControl : MonoBehaviour
 
     public bool isBoarding = true;
     List<GameObject> commuters = new List<GameObject>();
-    Tile commuteEnd;
 
     // Start is called before the first frame update
     void Start()
@@ -127,8 +126,8 @@ public class CameraControl : MonoBehaviour
                 if (gameManager.tak.IsLegalMove(commute))
                 {
                     gameManager.DoCommute(commute);
-                    this.commuters.Clear();
                 }
+                this.commuters.Clear();
             }
         }
     }
@@ -255,7 +254,6 @@ public class CameraControl : MonoBehaviour
         }
     }
 
-    // I only need list of pieces and one destination tile (If the rules are to be followed)
     public void ProcessClick(GameObject clicked)
     {
         Transform parent = clicked.transform.parent;
@@ -368,7 +366,6 @@ public class CameraControl : MonoBehaviour
         List<Jump> jumps = new List<Jump>();
         Tile start = Utils.NumToTile(this.commuters[0].transform.parent.GetSiblingIndex());
         int[] direction = new int[] { (end.row - start.row) / this.commuters.Count, (end.col - start.col) / this.commuters.Count };
-        int totalDistance = Utils.OneNorm(direction);
         Tile startTile = start;
         int baseAdjustment = 0;
         for (int i = 1; i <= this.commuters.Count; i++)
@@ -379,10 +376,6 @@ public class CameraControl : MonoBehaviour
             Tile endTile = new Tile(start.row + direction[0] * i, start.col + direction[1] * i);
             jumps.Add(new Jump(baseIndex, startTile, endTile));
             startTile = endTile;
-        }
-        foreach (var item in jumps)
-        {
-            //Debug.Log(item.cutoff + " " + item.origin + " " + item.destination);
         }
         return new Commute(this.player, jumps);
     }

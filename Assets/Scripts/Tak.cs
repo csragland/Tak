@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class Tak
 {
@@ -96,7 +95,6 @@ public class Tak
 
         if (Utils.OneNorm(direction) != 1)
         {
-            Debug.Log("1");
             return false;
         }
 
@@ -112,20 +110,16 @@ public class Tak
             List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
             if (i == 0 && startStack.Count == 0)
             {
-                Debug.Log("3");
                 return false;
             }
 
             if ((jump.cutoff < 1 && i > 0) || startStack.Count - jump.cutoff > Settings.dimension)
             {
-                Debug.Log("4");
                 return false;
             }
 
             if (i == 0 && startCrown.player != move.player)
             {
-                Debug.Log("5");
-                Debug.Log(startCrown.player + " vs " + move.player);
                 return false;
             }
 
@@ -137,12 +131,10 @@ public class Tak
             Piece endCrown = this.GetCrown(jump.destination);
             if (endCrown.type == PieceType.CAPSTONE)
             {
-                Debug.Log("6");
                 return false;
             }
             if (endCrown.type == PieceType.BLOCKER && !(startCrown.type == PieceType.CAPSTONE && jump.cutoff == startStack.Count - 1))
             {
-                Debug.Log("7");
                 return false;
             }
         }

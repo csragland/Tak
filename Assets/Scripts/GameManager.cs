@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -28,12 +27,6 @@ public class GameManager : MonoBehaviour
         }
         tak = new Tak(boardData);
         ui.InitalizeBoard(Settings.dimension);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 
     public void DoPlacement(Placement move)
@@ -75,3 +68,11 @@ public class GameManager : MonoBehaviour
     }
 
 }
+
+/*
+ * BUGS:
+ * - I somehow skipped player 2 when spawning pieces by going quickly
+ * - I locked up the wasd controlls earlier
+ * - The wrong piece somehow did not end up on top (even though it looks that way). happens when big stack jumps on small
+ * - Choosing the top three on a stack of 5+ makes it crap out and swap around. This is becasue of timing for setting parent, it seems.
+ */
