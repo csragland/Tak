@@ -8,7 +8,7 @@ public class PieceUI : MonoBehaviour
 
     UI ui;
 
-    CameraControl cameraControl;
+    PlayerControl playerControl;
 
     public bool isBeingSpawned = true;
     public bool isCommuting;
@@ -33,7 +33,7 @@ public class PieceUI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        this.cameraControl = GameObject.Find("Camera Focus").GetComponent<CameraControl>();
+        this.playerControl = GameObject.Find("Camera Focus").GetComponent<PlayerControl>();
         rb = this.GetComponent<Rigidbody>();
         this.GetComponent<Rigidbody>().isKinematic = true;
         isBeingSpawned = true;
@@ -136,6 +136,6 @@ public class PieceUI : MonoBehaviour
 
     private void OnMouseDown()
     {
-        this.cameraControl.ProcessClick(this.gameObject);
+        this.playerControl.ProcessClick(this.gameObject);
     }
 }

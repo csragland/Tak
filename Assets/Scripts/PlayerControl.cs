@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class CameraControl : MonoBehaviour
+public class PlayerControl : MonoBehaviour
 {
     public GameManager gameManager;
 
