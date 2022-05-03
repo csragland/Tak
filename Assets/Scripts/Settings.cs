@@ -16,7 +16,7 @@ public static class Settings
     public static readonly float cameraSnapSpeed = .2f;
     public static readonly float cameraTransitionTime = .5f;
     public static readonly float spawnCooldown = .25f;
-    public static readonly bool splitBoardView = true;
+    public static readonly bool splitBoardView = false;
 
     [Header("Stone Settings")]
     public static readonly float stoneRPS = 1.5f;

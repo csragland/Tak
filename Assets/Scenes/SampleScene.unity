@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657815, g: 0.49641192, b: 0.57481617, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -132,7 +132,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 128861860}
-  - component: {fileID: 128861859}
+  - component: {fileID: 128861861}
   m_Layer: 0
   m_Name: Camera Focus
   m_TagString: Untagged
@@ -140,22 +140,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &128861859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 128861858}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ae1f8aab5d174aca8898b964e4f09b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gameManager: {fileID: 0}
-  currentTileId: 0
-  player: 0
-  isBoarding: 1
 --- !u!4 &128861860
 Transform:
   m_ObjectHideFlags: 0
@@ -166,11 +150,28 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 963194228}
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &128861861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128861858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21aa79ccc9bae4b9093f68f8fb1a45c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameManager: {fileID: 0}
+  currentTileId: 0
+  player: 0
+  isBoarding: 1
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -260,6 +261,7 @@ Transform:
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -305,6 +307,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -323,6 +326,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameBoard: {fileID: 0}
   pieceSpawnHeight: 6
+  pieceNum: 0
   stone: {fileID: 5663912204500165053, guid: 1d357ffbaa0ea4d72a9ee4b74a415dfe, type: 3}
   blocker: {fileID: 3995767407677383550, guid: ffee6e23331284341ac6c6fadc679a4d, type: 3}
   capstone: {fileID: 2403967825216969686, guid: 52045596f8b414d70b3b326b7a74abb5, type: 3}
@@ -409,6 +413,7 @@ Transform:
   m_LocalRotation: {x: 0.32453278, y: -0, z: -0, w: 0.94587445}
   m_LocalPosition: {x: 0, y: 3, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 128861860}
   m_RootOrder: 0
@@ -429,7 +434,7 @@ MonoBehaviour:
   lineIntensity: 1.2
   fillAmount: 0.108
   lineColor0: {r: 1, g: 0.7647059, b: 0, a: 1}
-  lineColor1: {r: 0.7372549, g: 0.35686275, b: 0.7254902, a: 1}
+  lineColor1: {r: 0, g: 0.9150943, b: 0.05279323, a: 1}
   lineColor2: {r: 0, g: 0.5882353, b: 1, a: 1}
   additiveRendering: 0
   backfaceCulling: 1

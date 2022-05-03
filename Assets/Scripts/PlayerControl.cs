@@ -20,17 +20,19 @@ public class PlayerControl : MonoBehaviour
     float t2;
 
     Vector3 startZoom;
-    bool zoomPrepared;
+    Vector3 zoomDestination;
     float startDist;
     float currentDist;
-    Vector3 zoomDestination;
+    bool zoomPrepared;
 
     Quaternion startRotation;
     Quaternion endRotation;
     bool rotationPrepared;
 
     public bool isBoarding = true;
-    List<GameObject> commuters = new List<GameObject>();
+    List<GameObject> commuters = new();
+
+    List<(bool, int)> outlineMemory = new();
 
     // Start is called before the first frame update
     void Start()
@@ -107,28 +109,7 @@ public class PlayerControl : MonoBehaviour
 
             this.CheckArrowOver(e);
 
-            if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
-            {
-                gameManager.DoPlacement(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
-            }
-            else if (e.keyCode == KeyCode.Alpha2 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId))))
-            {
-                gameManager.DoPlacement(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId)));
-            }
-            else if (e.keyCode == KeyCode.Alpha3 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId))))
-            {
-                gameManager.DoPlacement(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
-            }
-
-            else if (e.keyCode == KeyCode.Space)
-            {
-                Commute commute = this.BuildCommute(Utils.NumToTile(this.currentTileId));
-                if (gameManager.tak.IsLegalMove(commute))
-                {
-                    gameManager.DoCommute(commute);
-                }
-                this.commuters.Clear();
-            }
+            this.CheckMove(e);
         }
     }
 
@@ -177,6 +158,33 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    private void CheckMove(Event e)
+    {
+        if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
+        {
+            gameManager.DoPlacement(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
+        }
+        else if (e.keyCode == KeyCode.Alpha2 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId))))
+        {
+            gameManager.DoPlacement(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId)));
+        }
+        else if (e.keyCode == KeyCode.Alpha3 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId))))
+        {
+            gameManager.DoPlacement(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
+        }
+
+        else if (e.keyCode == KeyCode.Space)
+        {
+            Commute commute = this.BuildCommute(Utils.NumToTile(this.currentTileId));
+            if (gameManager.tak.IsLegalMove(commute))
+            {
+                gameManager.DoCommute(commute);
+            }
+            this.commuters.Clear();
+        }
+    }
+
+
     private void SetFocus(int tileId)
     {
         GameObject tile = GameObject.Find("Board/Tile_" + tileId);
@@ -189,7 +197,18 @@ public class PlayerControl : MonoBehaviour
             {
                 for (int i = 0; i < numChildren; i++)
                 {
-                    tile.transform.GetChild(i).gameObject.GetComponent<cakeslice.Outline>().enabled = true;
+                    GameObject piece = tile.transform.GetChild(i).gameObject;
+                    cakeslice.Outline outline = piece.GetComponent<cakeslice.Outline>();
+                    if (this.commuters.Count > 0 && commuters[commuters.Count - 1].transform.IsChildOf(tile.transform))
+                    {
+                        outline.enabled = this.outlineMemory[i].Item1;
+                        outline.color = this.outlineMemory[i].Item2;
+                    }
+                    else
+                    {
+                        outline.enabled = true;
+                        outline.color = 0;
+                    }
                 }
             }
         }
@@ -261,20 +280,33 @@ public class PlayerControl : MonoBehaviour
         {
             if (this.commuters.Count == 0 || (clicked.transform.IsChildOf(commuters[commuters.Count - 1].transform.parent) && commuters.Count <= Settings.dimension) && !this.commuters.Contains(clicked))
             {
+                int clickedIndex = clicked.transform.GetSiblingIndex();
                 commuters.Add(clicked);
-                for (int i = 0; i <= clicked.transform.GetSiblingIndex(); i++)
+                clicked.GetComponent<cakeslice.Outline>().color = 1;
+                for (int i = 0; i < clickedIndex; i++)
                 {
-                    parent.GetChild(i).GetComponent<cakeslice.Outline>().enabled = false;
+                    Transform sibling = parent.GetChild(i);
+                    if (!this.commuters.Contains(sibling.gameObject))
+                    {
+                        sibling.GetComponent<cakeslice.Outline>().enabled = false;
+                    }
                 }
+                this.SaveOutline(parent);
             }
             else if (this.commuters.Contains(clicked))
             {
+                clicked.GetComponent<cakeslice.Outline>().color = 0;
                 int index = this.commuters.IndexOf(clicked);
                 int stackIndex = parent.childCount - 1;
                 int bottomIndex = index < 1 ? 0 : commuters[index - 1].transform.GetSiblingIndex();
                 do
                 {
-                    parent.GetChild(stackIndex).GetComponent<cakeslice.Outline>().enabled = true;
+                    cakeslice.Outline outline = parent.GetChild(stackIndex).GetComponent<cakeslice.Outline>();
+                    outline.enabled = true;
+                    if (stackIndex > bottomIndex)
+                    {
+                        outline.color = 0;
+                    }
                     stackIndex--;
 
                 } while (stackIndex >= bottomIndex);
@@ -283,6 +315,40 @@ public class PlayerControl : MonoBehaviour
                 {
                     this.commuters.RemoveAt(i);
                 }
+                this.SaveOutline(parent);
+            }
+        }
+    }
+
+
+    private Commute BuildCommute(Tile end)
+    {
+        List<Jump> jumps = new List<Jump>();
+        Tile start = Utils.NumToTile(this.commuters[0].transform.parent.GetSiblingIndex());
+        int[] direction = new int[] { (end.row - start.row) / this.commuters.Count, (end.col - start.col) / this.commuters.Count };
+        Tile startTile = start;
+        int baseAdjustment = 0;
+        for (int i = 1; i <= this.commuters.Count; i++)
+        {
+            int baseIndex = this.commuters[i - 1].transform.GetSiblingIndex() - baseAdjustment;
+            //Debug.Log(baseIndex);
+            baseAdjustment = this.commuters[i - 1].transform.GetSiblingIndex();
+            Tile endTile = new Tile(start.row + direction[0] * i, start.col + direction[1] * i);
+            jumps.Add(new Jump(baseIndex, startTile, endTile));
+            startTile = endTile;
+        }
+        return new Commute(this.player, jumps);
+    }
+
+    private void SaveOutline(Transform parent)
+    {
+        this.outlineMemory.Clear();
+        if (parent.childCount > 0)
+        {
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                cakeslice.Outline outline = parent.GetChild(i).GetComponent<cakeslice.Outline>();
+                this.outlineMemory.Add((outline.enabled, outline.color));
             }
         }
     }
@@ -340,15 +406,6 @@ public class PlayerControl : MonoBehaviour
         return false;
     }
 
-    private float MapAngle(float angle)
-    {
-        if (angle >= 180)
-        {
-            return angle - 360;
-        }
-        return angle;
-    }
-
     private bool IsPlayerContolled(GameObject tile)
     {
         int numChildren = tile.transform.childCount;
@@ -361,23 +418,12 @@ public class PlayerControl : MonoBehaviour
         return false;
     }
 
-    private Commute BuildCommute(Tile end)
+    private float MapAngle(float angle)
     {
-        List<Jump> jumps = new List<Jump>();
-        Tile start = Utils.NumToTile(this.commuters[0].transform.parent.GetSiblingIndex());
-        int[] direction = new int[] { (end.row - start.row) / this.commuters.Count, (end.col - start.col) / this.commuters.Count };
-        Tile startTile = start;
-        int baseAdjustment = 0;
-        for (int i = 1; i <= this.commuters.Count; i++)
+        if (angle >= 180)
         {
-            int baseIndex = this.commuters[i - 1].transform.GetSiblingIndex() - baseAdjustment;
-            //Debug.Log(baseIndex);
-            baseAdjustment = this.commuters[i - 1].transform.GetSiblingIndex();
-            Tile endTile = new Tile(start.row + direction[0] * i, start.col + direction[1] * i);
-            jumps.Add(new Jump(baseIndex, startTile, endTile));
-            startTile = endTile;
+            return angle - 360;
         }
-        return new Commute(this.player, jumps);
+        return angle;
     }
-
 }
