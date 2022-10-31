@@ -1,9 +1,12 @@
 using UnityEngine;
 using System.Collections;
+using TMPro;
+using UnityEngine.UI;
 //using System;
 
 public class UI : MonoBehaviour
 {
+    public GameManager gameManager;
     
     public GameObject gameBoard;
 
@@ -17,7 +20,17 @@ public class UI : MonoBehaviour
     public Material black;
     public Material white;
 
+    public Button startButton;
+    public TextMeshProUGUI playerText;
+
     // Start is called before the first frame update
+    private void Start()
+    {
+        gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
+        this.playerText.enabled = false;
+        startButton = GameObject.Find("Canvas/Title Screen/Start Button").GetComponent<Button>();
+        startButton.onClick.AddListener(gameManager.StartGame);
+    }
 
     public void InitalizeBoard(int dimension)
     {
@@ -36,7 +49,7 @@ public class UI : MonoBehaviour
                 tile.transform.position = tilePosition;
                 tile.transform.localScale = Settings.tileDimensions;
                 tile.transform.SetParent(gameBoard.transform);
-                tile.AddComponent<cakeslice.Outline>();
+                tile.AddComponent<cakeslice.Outline>().enabled = false;
 
                 tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? black : white;
 

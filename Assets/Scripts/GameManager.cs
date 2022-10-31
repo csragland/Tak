@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
     {
         ui = GameObject.Find("Game Manager").GetComponent<UI>();
 
-        List<Piece>[,] boardData = new List<Piece>[Settings.dimension,Settings.dimension];
+        List<Piece>[,] boardData = new List<Piece>[Settings.dimension, Settings.dimension];
         for (int i = 0; i < Settings.dimension; i++)
         {
             for (int j = 0; j < Settings.dimension; j++)
@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
             }
         }
         tak = new Tak(boardData);
-        ui.InitalizeBoard(Settings.dimension);
+
     }
 
     public void DoPlacement(Placement move)
@@ -42,16 +42,27 @@ public class GameManager : MonoBehaviour
         this.NextPlayer();
     }
 
-    public void DoCommute(Commute commute)
+    public void DoCommute(Commute move)
     {
-        ui.DoCommute(commute);
-        tak.DoCommute(commute);
+        ui.DoCommute(move);
+        tak.DoCommute(move);
         this.NextPlayer();
+    }
+
+    public void StartGame()
+    {
+        ui.InitalizeBoard(Settings.dimension);
+        GameObject.Find("Title Camera").SetActive(false);
+        ui.playerText.enabled = true;
+        GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
+        cameraFocus.SetActive(true);
+        GameObject.Find("Canvas/Title Screen").SetActive(false);
     }
 
     void NextPlayer()
     {
         currentPlayer = currentPlayer == 1 ? 2 : 1;
+        ui.playerText.text = "Player " + currentPlayer;
     }
 
     private float GetSpawnTime(Placement placement)

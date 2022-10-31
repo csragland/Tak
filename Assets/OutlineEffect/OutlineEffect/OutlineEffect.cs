@@ -292,26 +292,26 @@ namespace cakeslice
 			outlineCamera.Render();
 		}
 
-		private void OnEnable()
-		{
-			Outline[] o = FindObjectsOfType<Outline>();
-			if (autoEnableOutlines)
-			{
-				foreach (Outline oL in o)
-				{
-					oL.enabled = false;
-					oL.enabled = true;
-				}
-			}
-			else
-			{
-				foreach (Outline oL in o)
-				{
-					if (!outlines.Contains(oL))
-						outlines.Add(oL);
-				}
-			}
-		}
+  //	private void OnEnable()
+  //	{
+  //          Outline[] o = FindObjectsOfType<Outline>();
+  //          if (autoEnableOutlines)
+  //          {
+  //              foreach (Outline oL in o)
+  //              {
+  //                  oL.enabled = false;
+  //                  oL.enabled = true;
+  //              }
+  //          }
+  //          else
+  //          {
+  //              foreach (Outline oL in o)
+  //              {
+  //                  if (!outlines.Contains(oL))
+  //                      outlines.Add(oL);
+  //              }
+  //          }
+  //      }
 
 		void OnDestroy()
 		{

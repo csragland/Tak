@@ -10,8 +10,6 @@ public class PlayerControl : MonoBehaviour
 
     public int currentTileId;
 
-    bool initialized = false;
-
     public int player;
 
     Quaternion snapStart;
@@ -35,26 +33,30 @@ public class PlayerControl : MonoBehaviour
     List<(bool, int)> outlineMemory = new();
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         Camera.main.transform.position = Settings.cameraOffset;
         player = GameManager.currentPlayer;
         gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
         snapEnd = Quaternion.Euler(0, 0, 0);
-        
+
+        currentTileId = (int)Mathf.Floor(Mathf.Pow(Settings.dimension, 2) / 2);
+        GameObject centerTile = GameObject.Find("Board/Tile_" + currentTileId);
+        centerTile.GetComponent<cakeslice.Outline>().enabled = true;
+        this.transform.position = centerTile.transform.position;
     }
 
     // Update is called once per frame
     void LateUpdate()
     {
-        if (!this.initialized)
-        {
-            currentTileId = (int)Mathf.Floor(Mathf.Pow(Settings.dimension, 2) / 2);
-            GameObject centerTile = GameObject.Find("Board/Tile_" + currentTileId);
-            centerTile.GetComponent<cakeslice.Outline>().enabled = true;
-            this.transform.position = centerTile.transform.position;
-            this.initialized = true;
-        }
+        //if (!this.initialized)
+        //{
+        //    currentTileId = (int)Mathf.Floor(Mathf.Pow(Settings.dimension, 2) / 2);
+        //    GameObject centerTile = GameObject.Find("Board/Tile_" + currentTileId);
+        //    centerTile.GetComponent<cakeslice.Outline>().enabled = true;
+        //    this.transform.position = centerTile.transform.position;
+        //    this.initialized = true;
+        //}
         if (  Input.GetKey(KeyCode.A) && (!Settings.splitBoardView || (player == 1 && CompareRotations(Comparisons.LTE, 90)) || (player == 2 && (CompareRotations(Comparisons.LTE, -90) || CompareRotations(Comparisons.GT, 0))))  )
         {
             horizontalInput = 1;
@@ -70,11 +72,11 @@ public class PlayerControl : MonoBehaviour
             horizontalInput = 0;
         }
 
-        if (Input.GetKey(KeyCode.W) && Vector3.Distance(Camera.main.transform.position, this.transform.position) > 1)
+        if (Input.GetKey(KeyCode.W) && Vector3.Distance(Camera.main.transform.position, this.transform.position) > Settings.cameraMaxZoom)
         {
             verticalInput = 1;
         }
-        else if (Input.GetKey(KeyCode.S) && Vector3.Distance(Camera.main.transform.position, this.transform.position) < 10)
+        else if (Input.GetKey(KeyCode.S) && Vector3.Distance(Camera.main.transform.position, this.transform.position) < Settings.cameraMinZoom)
         {
             verticalInput = -1;
         }
