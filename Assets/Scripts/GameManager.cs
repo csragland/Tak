@@ -36,17 +36,39 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlacePiece(Placement placement)
     {
+        if (tak.EndsGame(placement))
+        {
+            gameOver = true;
+        }
         tak.DoPlacement(placement);
         ui.DoPlacement(placement);
         yield return new WaitForSeconds(GetSpawnTime(placement) + Settings.spawnCooldown);
-        this.NextPlayer();
+        if (gameOver)
+        {
+            Debug.Log("Player " + currentPlayer + " Wins!");
+        }
+        else
+        {
+            this.NextPlayer();
+        }
     }
 
     public void DoCommute(Commute move)
     {
-        ui.DoCommute(move);
+        if (tak.EndsGame(move))
+        {
+            gameOver = true;
+        }
         tak.DoCommute(move);
-        this.NextPlayer();
+        ui.DoCommute(move);
+        if (gameOver)
+        {
+            Debug.Log("Player " + currentPlayer + " Wins!");
+        }
+        else
+        {
+            this.NextPlayer();
+        }
     }
 
     public void StartGame()
@@ -84,6 +106,4 @@ public class GameManager : MonoBehaviour
  * BUGS:
  * - I somehow skipped player 2 when spawning pieces by going quickly
  * - I locked up the wasd controlls earlier
- * - The wrong piece somehow did not end up on top (even though it looks that way). happens when big stack jumps on small
- * - Choosing the top three on a stack of 5+ makes it crap out and swap around. This is becasue of timing for setting parent, it seems.
  */

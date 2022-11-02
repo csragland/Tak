@@ -5,24 +5,29 @@ public class PieceUI : MonoBehaviour
 
     public PieceType type;
     public int player;
+    public Rigidbody rb;
 
     UI ui;
-
     PlayerControl playerControl;
 
-    public bool isBeingSpawned = true;
-    public bool isCommuting;
     public Vector3 origin;
     public Vector3 destination;
+
+    // Spawn Variables
+    public bool isBeingSpawned = true;
     public GameObject destinationTile;
     private Vector3 spawnRotationAxis;
     private float spawnRPS;
     public float spawnTime;
-
     float t = 0;
 
-    public Rigidbody rb;
-    bool isGrounded;
+    // Jump Variables
+    public bool isJumping;
+    private float jumpStartTime;
+    private float jumpEndTime;
+    private float jumpTime;
+    private float jumpVy;
+    private float jumpVxz;
 
     public PieceUI(PieceType type, int player)
     {
@@ -35,9 +40,8 @@ public class PieceUI : MonoBehaviour
     {
         this.playerControl = GameObject.Find("Camera Focus").GetComponent<PlayerControl>();
         rb = this.GetComponent<Rigidbody>();
-        this.GetComponent<Rigidbody>().isKinematic = true;
         isBeingSpawned = true;
-        isCommuting = false;
+        isJumping = false;
         this.origin = this.transform.position;
 
         if (this.type == PieceType.STONE)
@@ -77,26 +81,25 @@ public class PieceUI : MonoBehaviour
             else
             {
                 this.isBeingSpawned = false;
-                this.rb.isKinematic = false;
                 t = 0;
             }
         }
-        else if (this.isCommuting)
+        else if (this.isJumping)
         {
-            this.rb.isKinematic = false;
 
-            if (this.transform.position != this.destination)
+            if (Time.time <= this.jumpEndTime)
             {
-                if (this.isGrounded)
-                {
-                    Vector3 direction = this.destination - this.origin;
-                    this.rb.AddForce(Vector3.up * GetVerticalImpulse(1, 1) + direction * this.GetHorizontalImpulse(1, 1), ForceMode.Impulse);
-                    this.isGrounded = false;
-                }
+
+                Vector3 horizontalDirection = this.destination - this.origin;
+                horizontalDirection.y = 0;
+                float deltaTime = Time.time - this.jumpStartTime;
+                float deltaY = this.jumpVy * deltaTime + 0.5f * Physics.gravity.y * deltaTime * deltaTime;
+                Vector3 deltaPos = horizontalDirection * (deltaTime * jumpVxz) + Vector3.up * deltaY;
+                this.transform.position = this.origin + deltaPos;
             }
             else
             {
-                this.isCommuting = false;
+                this.isJumping = false;
                 this.transform.position = this.destination;
                 this.transform.SetParent(destinationTile.transform);
             }
@@ -104,34 +107,17 @@ public class PieceUI : MonoBehaviour
         }
     }
 
-    public void SetCommute(Vector3 destination, GameObject tile)
+    public void SetCommute(Vector3 destination, GameObject tile, float[] jumpData)
     {
-        this.isCommuting = true;
+        this.isJumping = true;
         this.origin = this.transform.position;
         this.destination = destination;
-        this.rb.isKinematic = false;
         this.destinationTile = tile;
-    }
-
-    float GetVerticalImpulse(float height, float mass)
-    {
-        return Mathf.Sqrt(-2 * Physics.gravity.y * height) * mass;
-    }
-
-    float GetHorizontalImpulse(float height, float mass)
-    {
-        float time = -GetVerticalImpulse(height, mass) / Physics.gravity.y;
-        return Settings.tileDimensions.x / (2 * time);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        this.isGrounded = true;
-        if (this.isCommuting)
-        {
-            this.transform.position = this.destination;
-            this.rb.isKinematic = true;
-        }
+        this.jumpStartTime = Time.time;
+        this.jumpVxz = jumpData[0];
+        this.jumpVy = jumpData[1];
+        this.jumpTime = jumpData[2];
+        this.jumpEndTime = this.jumpStartTime + this.jumpTime;
     }
 
     private void OnMouseDown()

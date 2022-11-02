@@ -44,7 +44,7 @@ public class Tak
     public bool EndsGame(Move move)
     {
         bool[,] visited = new bool[Settings.dimension, Settings.dimension];
-        int[] spans = this.FindSpan(move.player, move.destination, visited, move.destination);
+        int[] spans = this.FindSpan(move.player, move.destination, visited);
         return Math.Max(spans[1] - spans[0], spans[3] - spans[2]) >= Settings.dimension - 1;
     }
 
@@ -141,24 +141,23 @@ public class Tak
         return true;
     }
 
-    public int[] FindSpan(int player, Tile tile, bool[,] visited, Tile origin)
+    public int[] FindSpan(int player, Tile tile, bool[,] visited)
     {
         visited[tile.row, tile.col] = true;
-        int[] most = { int.MaxValue, int.MinValue, int.MaxValue, int.MinValue };
+        int[] span = { tile.row, tile.row, tile.col, tile.col };
 
         foreach (var neighbor in this.GetNeighbors(player,tile))
         {
             if (!visited[neighbor.row, neighbor.col])
             {
-                most = FindSpan(player, neighbor, visited, origin);
-                most[0] = Math.Min(most[0], neighbor.row);
-                most[1] = Math.Max(most[1], neighbor.row);
-                most[2] = Math.Min(most[2], neighbor.col);
-                most[3] = Math.Max(most[3], neighbor.col);
+                int [] neighborSpan = FindSpan(player, neighbor, visited);
+                span[0] = Math.Min(neighborSpan[0], span[0]);
+                span[1] = Math.Max(neighborSpan[1], span[1]);
+                span[2] = Math.Min(neighborSpan[2], span[2]);
+                span[3] = Math.Max(neighborSpan[3], span[3]);
             }
         }
-
-        return most;
+        return span;
     }
 
     public List<Tile> GetNeighbors(int player, Tile tile)
@@ -168,7 +167,8 @@ public class Tak
         if (tile.row < Settings.dimension - 1)
         {
             Tile tileUp = new Tile(tile.row + 1, tile.col);
-            if (this.GetCrown(tileUp).player == player)
+            Piece crown = this.GetCrown(tileUp);
+            if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
                 neighbors.Add(tileUp);
             }
@@ -176,7 +176,8 @@ public class Tak
         if (tile.row > 0)
         {
             Tile tileDown = new Tile(tile.row - 1, tile.col);
-            if (this.GetCrown(tileDown).player == player)
+            Piece crown = this.GetCrown(tileDown);
+            if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
                 neighbors.Add(tileDown);
             }
@@ -184,7 +185,8 @@ public class Tak
         if (tile.col < Settings.dimension - 1)
         {
             Tile tileRight = new Tile(tile.row, tile.col + 1);
-            if (this.GetCrown(tileRight).player == player)
+            Piece crown = this.GetCrown(tileRight);
+            if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
                 neighbors.Add(tileRight);
             }
@@ -192,18 +194,22 @@ public class Tak
         if (tile.col > 0)
         {
             Tile tileLeft = new Tile(tile.row, tile.col - 1);
-            if (this.GetCrown(tileLeft).player == player)
+            Piece crown = this.GetCrown(tileLeft);
+            if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
                 neighbors.Add(tileLeft);
             }
         }
-
         return neighbors;
     }
 
     public Piece GetCrown(Tile tile)
     {
         List<Piece> stack = this.board[tile.row, tile.col];
+        if (stack.Count == 0)
+        {
+            return null;
+        }
         return stack[stack.Count - 1];
     }
 

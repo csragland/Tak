@@ -35,4 +35,6 @@ public static class Settings
     public static readonly float capstoneSpawnTime = .2f;
     public static readonly float capstoneSpawnHeight = 6;
 
+    public static readonly float overshootHeight = 3 * tileDimensions.y;
+    public static readonly float jumpCooldown =  1f;
 }
