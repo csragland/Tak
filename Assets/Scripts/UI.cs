@@ -104,30 +104,32 @@ public class UI : MonoBehaviour
         pieceObj.transform.SetParent(tile.transform);
     }
 
-    public void DoCommute(Commute commute)
+    public IEnumerator DoCommute(Commute commute)
     {
-        StartCoroutine(StartCommute(commute));
-    }
-
-    public IEnumerator StartCommute(Commute commute)
-    {
-        foreach (var jump in commute.jumps)
+        for (int i = 0; i < commute.jumps.Count; i++)
         {
+            Jump jump = commute.jumps[i];
             GameObject tile = Utils.GetUITile(jump.origin);
             GameObject endStack = Utils.GetUITile(jump.destination);
             int newStackIndex = 0;
             float timeToWait = 0;
-            for (int i = jump.cutoff; i < tile.transform.childCount; i++)
+            Debug.Log("Jump " + i);
+            for (int j = jump.cutoff; j < tile.transform.childCount; j++)
             {
-                PieceUI piece = tile.transform.GetChild(i).GetComponent<PieceUI>();
+                PieceUI piece = tile.transform.GetChild(j).GetComponent<PieceUI>();
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (newStackIndex * GetPieceHeight(stone) + (endStack.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
+                Debug.Log(piece.name + ": " + endPosition);
                 float[] jumpData = Utils.JumpPhysics(piece.transform.position, endPosition);
                 piece.SetCommute(endPosition, endStack, jumpData);
                 newStackIndex++;
                 if (timeToWait == 0)
                 {
-                    timeToWait = jumpData[2] + Settings.jumpCooldown;
+                    timeToWait = jumpData[2];
                 }
+            }
+            if (i < commute.jumps.Count - 1)
+            {
+                timeToWait += Settings.jumpCooldown;
             }
             yield return new WaitForSeconds(timeToWait);
         }

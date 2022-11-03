@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
 
     public static int currentPlayer = 1;
 
+    private bool controlsLocked = false;
+
     public static bool gameOver = false;
 
     // Start is called before the first frame update
@@ -31,11 +33,15 @@ public class GameManager : MonoBehaviour
 
     public void DoPlacement(Placement move)
     {
-        StartCoroutine(PlacePiece(move));
+        if (!controlsLocked)
+        {
+            StartCoroutine(PlacePiece(move));
+        }
     }
 
     private IEnumerator PlacePiece(Placement placement)
     {
+        controlsLocked = true;
         if (tak.EndsGame(placement))
         {
             gameOver = true;
@@ -51,16 +57,27 @@ public class GameManager : MonoBehaviour
         {
             this.NextPlayer();
         }
+        controlsLocked = false;
     }
+
 
     public void DoCommute(Commute move)
     {
+        if (!controlsLocked)
+        {
+            StartCoroutine(StartCommute(move));
+        }
+    }
+
+    public IEnumerator StartCommute(Commute move)
+    {
+        controlsLocked = true;
         if (tak.EndsGame(move))
         {
             gameOver = true;
         }
         tak.DoCommute(move);
-        ui.DoCommute(move);
+        yield return StartCoroutine(ui.DoCommute(move));
         if (gameOver)
         {
             Debug.Log("Player " + currentPlayer + " Wins!");
@@ -69,6 +86,7 @@ public class GameManager : MonoBehaviour
         {
             this.NextPlayer();
         }
+        controlsLocked = false;
     }
 
     public void StartGame()
@@ -106,4 +124,14 @@ public class GameManager : MonoBehaviour
  * BUGS:
  * - I somehow skipped player 2 when spawning pieces by going quickly
  * - I locked up the wasd controlls earlier
+ * - Nth (N > 1) jump in commute messes up piece positions.
+ */
+
+/*
+ * TODO:
+ * - Flatten Standing Stones
+ * - Victory effects (screen, highlight, road animation??)
+ * - Textures
+ * - Sounds effects
+ * - Piece shapes?
  */
