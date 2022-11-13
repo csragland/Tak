@@ -14,7 +14,7 @@ public class PieceUI : MonoBehaviour
     public Vector3 destination;
 
     // Spawn Variables
-    public bool isBeingSpawned = true;
+    public bool isBeingSpawned = false;
     public GameObject destinationTile;
     private Vector3 spawnRotationAxis;
     private float spawnRPS;
@@ -40,7 +40,6 @@ public class PieceUI : MonoBehaviour
     {
         this.playerControl = GameObject.Find("Camera Focus").GetComponent<PlayerControl>();
         rb = this.GetComponent<Rigidbody>();
-        isBeingSpawned = true;
         isJumping = false;
         this.origin = this.transform.position;
 
@@ -123,5 +122,24 @@ public class PieceUI : MonoBehaviour
     private void OnMouseDown()
     {
         this.playerControl.ProcessClick(this.gameObject);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Assume only capstone is trigger
+        if (this.type == PieceType.BLOCKER)
+        {
+            // Animate here
+            Vector3 stonePos = this.transform.position + .5f * (ui.GetPieceHeight(ui.stone) - ui.GetPieceHeight(ui.blocker)) * Vector3.up;
+            GameObject stone = Instantiate(ui.stone, stonePos, ui.stone.transform.rotation);
+            PieceUI stoneData = stone.GetComponent<PieceUI>();
+            stoneData.player = this.player;
+            stoneData.type = PieceType.STONE;
+            // This is a race condition with the capstone (should win by good margin though)
+            stone.transform.SetParent(this.transform.parent);
+            stone.name = this.name;
+            other.isTrigger = false;
+            Destroy(this.gameObject);
+        }
     }
 }

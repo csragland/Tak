@@ -98,8 +98,10 @@ public class UI : MonoBehaviour
         pieceNum++;
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();
+        pieceData.isBeingSpawned = true;
         pieceData.destination = tile.transform.position + ((Settings.tileDimensions.y + pieceHeight) / 2) * Vector3.up + ((tile.transform.childCount) * pieceHeight) * Vector3.up;
-        pieceData.type = placement.piece; pieceData.player = placement.player;
+        pieceData.type = placement.piece;
+        pieceData.player = placement.player;
 
         pieceObj.transform.SetParent(tile.transform);
     }
@@ -113,18 +115,29 @@ public class UI : MonoBehaviour
             GameObject endStack = Utils.GetUITile(jump.destination);
             int newStackIndex = 0;
             float timeToWait = 0;
-            Debug.Log("Jump " + i);
+            bool flatten = false;
+            if (i < commute.jumps.Count - 1)
+            {
+                timeToWait += Settings.jumpCooldown;
+            }
+            else
+            {
+                flatten = gameManager.tak.JumpWillFlatten(jump);
+            }
             for (int j = jump.cutoff; j < tile.transform.childCount; j++)
             {
                 PieceUI piece = tile.transform.GetChild(j).GetComponent<PieceUI>();
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (newStackIndex * GetPieceHeight(stone) + (endStack.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
-                Debug.Log(piece.name + ": " + endPosition);
                 float[] jumpData = Utils.JumpPhysics(piece.transform.position, endPosition);
                 piece.SetCommute(endPosition, endStack, jumpData);
                 newStackIndex++;
                 if (timeToWait == 0)
                 {
                     timeToWait = jumpData[2];
+                }
+                if (flatten)
+                {
+                    piece.GetComponent<Collider>().isTrigger = true;
                 }
             }
             if (i < commute.jumps.Count - 1)

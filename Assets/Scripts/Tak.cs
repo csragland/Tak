@@ -88,9 +88,11 @@ public class Tak
 
     public bool JumpWillFlatten(Jump jump)
     {
+        Piece jumper = this.GetCrown(jump.origin);
+        Piece victim = this.GetCrown(jump.destination);
         return this.board[jump.origin.row, jump.origin.col].Count - 1 == jump.cutoff
-            && this.GetCrown(jump.origin).type == PieceType.CAPSTONE
-            && this.GetCrown(jump.destination).type == PieceType.BLOCKER;
+            && (jumper is not null) && jumper.type == PieceType.CAPSTONE
+            && (victim is not null) && victim.type == PieceType.BLOCKER;
     }
 
     private bool IsLegalMove(Placement move)

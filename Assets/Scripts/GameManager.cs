@@ -46,8 +46,8 @@ public class GameManager : MonoBehaviour
         {
             gameOver = true;
         }
-        tak.DoPlacement(placement);
         ui.DoPlacement(placement);
+        tak.DoPlacement(placement);
         yield return new WaitForSeconds(GetSpawnTime(placement) + Settings.spawnCooldown);
         if (gameOver)
         {
@@ -76,8 +76,8 @@ public class GameManager : MonoBehaviour
         {
             gameOver = true;
         }
-        tak.DoCommute(move);
         yield return StartCoroutine(ui.DoCommute(move));
+        tak.DoCommute(move);
         if (gameOver)
         {
             Debug.Log("Player " + currentPlayer + " Wins!");
