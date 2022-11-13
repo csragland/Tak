@@ -76,19 +76,19 @@ public class UI : MonoBehaviour
         {
             objToSpawn = stone;
             this.pieceSpawnHeight = Settings.stoneSpawnHeight;
-            pieceHeight = objToSpawn.transform.localScale.y;
+            pieceHeight = GetPieceHeight(objToSpawn);
         }
         else if (placement.piece == PieceType.BLOCKER)
         {
             objToSpawn = blocker;
             this.pieceSpawnHeight = Settings.blockerSpawnHeight;
-            pieceHeight = objToSpawn.transform.localScale.x;
+            pieceHeight = GetPieceHeight(objToSpawn);
         }
         else if (placement.piece == PieceType.CAPSTONE)
         {
             objToSpawn = capstone;
             this.pieceSpawnHeight = Settings.capstoneSpawnHeight;
-            pieceHeight = objToSpawn.transform.localScale.y * 2;
+            pieceHeight = GetPieceHeight(objToSpawn);
         }
 
         Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
@@ -138,11 +138,22 @@ public class UI : MonoBehaviour
     public float GetPieceHeight(GameObject piece)
     {
         PieceType pieceType = piece.GetComponent<PieceUI>().type;
-        if (pieceType == PieceType.CAPSTONE)
+        if (pieceType == PieceType.STONE)
         {
-            return capstone.transform.localScale.y * 2;
+            return stone.transform.localScale.y;
         }
-        return stone.transform.localScale.y;
+        else if (pieceType == PieceType.BLOCKER)
+        {
+            return blocker.transform.localScale.y;
+        }
+        else if (pieceType == PieceType.CAPSTONE)
+        {
+            return .815f * capstone.transform.localScale.z;
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     //private bool Migrated(Jump jump)

@@ -134,4 +134,5 @@ public class GameManager : MonoBehaviour
  * - Textures
  * - Sounds effects
  * - Piece shapes?
+ * - Car drive across path
  */

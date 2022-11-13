@@ -74,11 +74,23 @@ public class Tak
     {
         List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
         List<Piece> endStack = this.board[jump.destination.row, jump.destination.col];
+        // Flatten Standing Stones with lone Capstones
+        if (this.JumpWillFlatten(jump))
+        {
+            endStack[endStack.Count - 1].type = PieceType.STONE;
+        }
         while (startStack.Count - jump.cutoff > 0)
         {
             endStack.Add(startStack[jump.cutoff]);
             startStack.RemoveAt(jump.cutoff);
         }
+    }
+
+    public bool JumpWillFlatten(Jump jump)
+    {
+        return this.board[jump.origin.row, jump.origin.col].Count - 1 == jump.cutoff
+            && this.GetCrown(jump.origin).type == PieceType.CAPSTONE
+            && this.GetCrown(jump.destination).type == PieceType.BLOCKER;
     }
 
     private bool IsLegalMove(Placement move)
