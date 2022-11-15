@@ -128,17 +128,18 @@ public class UI : MonoBehaviour
             {
                 PieceUI piece = tile.transform.GetChild(j).GetComponent<PieceUI>();
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (newStackIndex * GetPieceHeight(stone) + (endStack.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
+                if (flatten)
+                {
+                    endPosition.y += GetPieceHeight(blocker) - GetPieceHeight(stone);
+                    piece.GetComponent<Collider>().isTrigger = true;
+                }
                 float[] jumpData = Utils.JumpPhysics(piece.transform.position, endPosition);
-                piece.SetCommute(endPosition, endStack, jumpData);
-                newStackIndex++;
                 if (timeToWait == 0)
                 {
                     timeToWait = jumpData[2];
                 }
-                if (flatten)
-                {
-                    piece.GetComponent<Collider>().isTrigger = true;
-                }
+                piece.SetCommute(endPosition, endStack, jumpData);
+                newStackIndex++;
             }
             if (i < commute.jumps.Count - 1)
             {

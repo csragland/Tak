@@ -125,6 +125,8 @@ public class GameManager : MonoBehaviour
  * - I somehow skipped player 2 when spawning pieces by going quickly
  * - I locked up the wasd controlls earlier
  * - Nth (N > 1) jump in commute messes up piece positions.
+ * 
+ * -Just one jump??
  */
 
 /*
@@ -133,6 +135,5 @@ public class GameManager : MonoBehaviour
  * - Victory effects (screen, highlight, road animation??)
  * - Textures
  * - Sounds effects
- * - Piece shapes?
  * - Car drive across path
  */

@@ -29,6 +29,8 @@ public class PieceUI : MonoBehaviour
     private float jumpVy;
     private float jumpVxz;
 
+    //private Animator animator
+
     public PieceUI(PieceType type, int player)
     {
         this.type = type;
@@ -129,9 +131,11 @@ public class PieceUI : MonoBehaviour
         // Assume only capstone is trigger
         if (this.type == PieceType.BLOCKER)
         {
-            // Animate here
             Vector3 stonePos = this.transform.position + .5f * (ui.GetPieceHeight(ui.stone) - ui.GetPieceHeight(ui.blocker)) * Vector3.up;
             GameObject stone = Instantiate(ui.stone, stonePos, ui.stone.transform.rotation);
+            Animator stoneAnimator = stone.GetComponent<Animator>();
+            stoneAnimator.enabled = true;
+            stoneAnimator.SetBool("isExpanding", true);
             PieceUI stoneData = stone.GetComponent<PieceUI>();
             stoneData.player = this.player;
             stoneData.type = PieceType.STONE;
@@ -139,7 +143,22 @@ public class PieceUI : MonoBehaviour
             stone.transform.SetParent(this.transform.parent);
             stone.name = this.name;
             other.isTrigger = false;
-            Destroy(this.gameObject);
+
+            GameObject shell = new("temp");
+            shell.transform.position = this.transform.position;
+            this.transform.SetParent(shell.transform);
+            Animator animator = gameObject.GetComponent<Animator>();
+            animator.enabled = true;
+            // Object destroyed when done
+            animator.SetBool("isFlattening", true);
+
+            GameObject shellOther = new("temp");
+            shellOther.transform.position = other.gameObject.transform.position;
+            other.gameObject.transform.SetParent(shellOther.transform);
+            Animator animatorOther = other.gameObject.GetComponent<Animator>();
+            animatorOther.enabled = true;
+            // Object destroyed when done
+            animatorOther.SetBool("isSinking", true);
         }
     }
 }
