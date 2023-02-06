@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
 //using System;
@@ -115,7 +116,9 @@ public class UI : MonoBehaviour
             GameObject endStack = Utils.GetUITile(jump.destination);
             int newStackIndex = 0;
             float timeToWait = 0;
+            bool baseTimeSet = false;
             bool flatten = false;
+            List<GameObject> jumpers = new();
             if (i < commute.jumps.Count - 1)
             {
                 timeToWait += Settings.jumpCooldown;
@@ -126,17 +129,21 @@ public class UI : MonoBehaviour
             }
             for (int j = jump.cutoff; j < tile.transform.childCount; j++)
             {
-                PieceUI piece = tile.transform.GetChild(j).GetComponent<PieceUI>();
+                GameObject pieceObj = tile.transform.GetChild(j).gameObject;
+                jumpers.Add(pieceObj);
+                PieceUI piece = pieceObj.GetComponent<PieceUI>();
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (newStackIndex * GetPieceHeight(stone) + (endStack.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
                 if (flatten)
                 {
                     endPosition.y += GetPieceHeight(blocker) - GetPieceHeight(stone);
                     piece.GetComponent<Collider>().isTrigger = true;
+                    timeToWait += Settings.flattenTime;
                 }
                 float[] jumpData = Utils.JumpPhysics(piece.transform.position, endPosition);
-                if (timeToWait == 0)
+                if (!baseTimeSet)
                 {
-                    timeToWait = jumpData[2];
+                    timeToWait += jumpData[2];
+                    baseTimeSet = true;
                 }
                 piece.SetCommute(endPosition, endStack, jumpData);
                 newStackIndex++;
@@ -146,6 +153,16 @@ public class UI : MonoBehaviour
                 timeToWait += Settings.jumpCooldown;
             }
             yield return new WaitForSeconds(timeToWait);
+            if (flatten)
+            {
+                jumpers[0].GetComponent<Animator>().enabled = false;
+                GameObject temp = GameObject.Find("temp");
+                Destroy(temp);
+            }
+            foreach (var jumper in jumpers)
+            {
+                jumper.transform.SetParent(endStack.transform);
+            }
         }
     }
 

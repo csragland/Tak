@@ -37,4 +37,6 @@ public static class Settings
 
     public static readonly float overshootHeight = 3 * tileDimensions.y;
     public static readonly float jumpCooldown =  .25f;
+
+    public static readonly float flattenTime = 80f / 60f;
 }

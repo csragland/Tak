@@ -23,6 +23,11 @@ public static class Utils
         return GameObject.Find("Board/Tile_" + IndexToNum(tile.row, tile.col));
     }
 
+    public static GameObject GetUITile(int tileNum)
+    {
+        return GameObject.Find("Board/Tile_" + tileNum);
+    }
+
     public static bool IsOnHorizontalEdge(int tileNum, int dim)
     {
         return tileNum % dim == 0 || tileNum % dim == dim - 1;

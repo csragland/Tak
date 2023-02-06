@@ -278,9 +278,11 @@ public class PlayerControl : MonoBehaviour
     public void ProcessClick(GameObject clicked)
     {
         Transform parent = clicked.transform.parent;
-        if (this.isBoarding && clicked.transform.IsChildOf(Utils.GetUITile(Utils.NumToTile(currentTileId)).transform) && this.IsPlayerContolled(parent.gameObject))
+        // If I am allowing a commute to be created and I am clicking on a piece that is within the current focus...
+        if (this.isBoarding && clicked.transform.IsChildOf(Utils.GetUITile(currentTileId).transform) && this.IsPlayerContolled(parent.gameObject))
         {
-            if (this.commuters.Count == 0 || (clicked.transform.IsChildOf(commuters[commuters.Count - 1].transform.parent) && commuters.Count <= Settings.dimension) && !this.commuters.Contains(clicked))
+            // If no commuters exist OR what I am clicking on is a sibling of the other commuters but there are still less than <dimension> commuters AND I am clicking on a new tile
+            if (this.commuters.Count == 0 || (clicked.transform.IsChildOf(commuters[commuters.Count - 1].transform.parent) && commuters.Count < Settings.dimension) && !this.commuters.Contains(clicked))
             {
                 int clickedIndex = clicked.transform.GetSiblingIndex();
                 commuters.Add(clicked);
@@ -332,10 +334,10 @@ public class PlayerControl : MonoBehaviour
         int baseAdjustment = 0;
         for (int i = 1; i <= this.commuters.Count; i++)
         {
-            int baseIndex = this.commuters[i - 1].transform.GetSiblingIndex() - baseAdjustment;
-            //Debug.Log(baseIndex);
-            baseAdjustment = this.commuters[i - 1].transform.GetSiblingIndex();
+            int stackIndex = this.commuters[i - 1].transform.GetSiblingIndex();
+            int baseIndex = stackIndex + baseAdjustment;
             Tile endTile = new Tile(start.row + direction[0] * i, start.col + direction[1] * i);
+            baseAdjustment = -stackIndex + Utils.GetUITile(endTile).transform.childCount;
             jumps.Add(new Jump(baseIndex, startTile, endTile));
             startTile = endTile;
         }

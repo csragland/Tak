@@ -102,7 +102,7 @@ public class PieceUI : MonoBehaviour
             {
                 this.isJumping = false;
                 this.transform.position = this.destination;
-                this.transform.SetParent(destinationTile.transform);
+                //this.transform.SetParent(destinationTile.transform);
             }
             
         }

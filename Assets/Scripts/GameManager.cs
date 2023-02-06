@@ -124,14 +124,13 @@ public class GameManager : MonoBehaviour
  * BUGS:
  * - I somehow skipped player 2 when spawning pieces by going quickly
  * - I locked up the wasd controlls earlier
- * - Nth (N > 1) jump in commute messes up piece positions.
- * 
- * -Just one jump??
+ * - Animation is still bad; lag after first one
+ * - Parent setting for animation must still be bad since I couldn't commute with the right pieces at one point. Cutoff not changing as expected (stayed the same) -- ProcessClick/BuildCommute are flawed
+ * - Capstones that jump on elevated standing stones do not flatten (but they go where they are supposed to)
  */
 
 /*
  * TODO:
- * - Flatten Standing Stones
  * - Victory effects (screen, highlight, road animation??)
  * - Textures
  * - Sounds effects
