@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -9,23 +10,26 @@ public class Tak
     public int[,] piecesSpawned = new int[,] { {0, 0}, {0, 0} };
 
     public int[] maxPieces = new int[] { 17, 1 };
+
+    public int turnNum = 1;
     
     public Tak(List<Piece>[,] takBoard)
     {
         this.board = takBoard;
     }
 
-    public void DoMove(Move move)
-    {
-        if (move.GetType() == typeof(Placement))
-        {
-            this.DoPlacement((Placement)move);
-        }
-        if (move.GetType() == typeof(Commute))
-        {
-            this.DoCommute((Commute)move);
-        }
-    }
+    //public void DoMove(Move move)
+    //{
+    //    if (move.GetType() == typeof(Placement))
+    //    {
+    //        this.DoPlacement((Placement)move);
+    //    }
+    //    if (move.GetType() == typeof(Commute))
+    //    {
+    //        this.DoCommute((Commute)move);
+    //    }
+    //    this.turnNum += 1;
+    //}
 
     public bool IsLegalMove(Move move)
     { 
@@ -52,10 +56,12 @@ public class Tak
     {
         if (IsLegalMove(move))
         {
+            //int pieceOwner = this.turnNum > 2 ? move.player : move.player == 1 ? 2 : 1;
             Piece piece = new Piece(move.piece, move.player);
             this.board[move.destination.row, move.destination.col].Add(piece);
             int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
             this.piecesSpawned[move.player - 1, pieceIndex] += 1;
+            this.turnNum += 1;
         }
     }
 
@@ -67,6 +73,7 @@ public class Tak
             {
                 this.DoJump(jump);
             }
+            this.turnNum += 1;
         }
     }
 
@@ -98,6 +105,10 @@ public class Tak
     private bool IsLegalMove(Placement move)
     {
         int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
+        if (this.turnNum < 3 && move.piece != PieceType.STONE)
+        {
+            return false;
+        }
         return this.board[move.destination.row, move.destination.col].Count == 0 && piecesSpawned[move.player - 1, pieceIndex] < maxPieces[pieceIndex];
     }
 

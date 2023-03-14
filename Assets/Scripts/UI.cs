@@ -18,17 +18,21 @@ public class UI : MonoBehaviour
     public GameObject blocker;
     public GameObject capstone;
 
-    public Material black;
-    public Material white;
+    public Material blackTile;
+    public Material whiteTile;
+    public Material blackPiece;
+    public Material whitePiece;
 
     public Button startButton;
     public TextMeshProUGUI playerText;
+    public TextMeshProUGUI victoryText;
 
     // Start is called before the first frame update
     private void Start()
     {
         gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
         this.playerText.enabled = false;
+        this.victoryText.enabled = false;
         startButton = GameObject.Find("Canvas/Title Screen/Start Button").GetComponent<Button>();
         startButton.onClick.AddListener(gameManager.StartGame);
     }
@@ -52,7 +56,7 @@ public class UI : MonoBehaviour
                 tile.transform.SetParent(gameBoard.transform);
                 tile.AddComponent<cakeslice.Outline>().enabled = false;
 
-                tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? black : white;
+                tile.GetComponent<Renderer>().material = Utils.IsEven(tileNum) ? blackTile : whiteTile;
 
                 tilePosition.x += Settings.tileDimensions.x;
             }
@@ -147,10 +151,6 @@ public class UI : MonoBehaviour
                 }
                 piece.SetCommute(endPosition, endStack, jumpData);
                 newStackIndex++;
-            }
-            if (i < commute.jumps.Count - 1)
-            {
-                timeToWait += Settings.jumpCooldown;
             }
             yield return new WaitForSeconds(timeToWait);
             if (flatten)

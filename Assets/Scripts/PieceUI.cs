@@ -56,7 +56,7 @@ public class PieceUI : MonoBehaviour
         {
             this.spawnTime = Settings.blockerSpawnTime;
             this.spawnRPS = Settings.blockerRPS;
-            this.spawnRotationAxis = Vector3.right;
+            this.spawnRotationAxis = Vector3.up;
         }
         else
         {
@@ -65,7 +65,7 @@ public class PieceUI : MonoBehaviour
         }
 
         ui = GameObject.Find("Game Manager").GetComponent<UI>();
-        this.GetComponent<Renderer>().material = player == 1 ? ui.white : ui.black;
+        this.GetComponent<Renderer>().material = player == 1 ? ui.whitePiece : ui.blackPiece;
     }
 
     // Update is called once per frame

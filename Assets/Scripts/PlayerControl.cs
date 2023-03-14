@@ -87,7 +87,13 @@ public class PlayerControl : MonoBehaviour
 
         if (player == GameManager.currentPlayer)
         {
-            if (horizontalInput == 0 && ((transform.rotation.y != 0 && player == 1 && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true)) || (transform.eulerAngles.y != 180 && player == 2 && CompareRotations(Comparisons.GTE, Mathf.Abs(MapAngle(this.snapEnd.eulerAngles.y)) - Settings.cameraSnapRadius, true))))
+            if (horizontalInput == 0
+                && ((transform.rotation.y != 0
+                        && (player == 1 || !Settings.splitBoardView)
+                        && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true))
+                   || (transform.eulerAngles.y != 180
+                        && (player == 2 && Settings.splitBoardView)
+                        && CompareRotations(Comparisons.GTE, Mathf.Abs(MapAngle(this.snapEnd.eulerAngles.y)) - Settings.cameraSnapRadius, true))))
             {
                 t1 += Time.deltaTime / Settings.cameraSnapSpeed;
                 this.transform.rotation = Quaternion.Lerp(snapStart, snapEnd, t1);
@@ -162,17 +168,18 @@ public class PlayerControl : MonoBehaviour
 
     private void CheckMove(Event e)
     {
-        if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
+        int pieceOwner = gameManager.tak.turnNum > 2 ? player : player == 1 ? 2 : 1;
+        if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(pieceOwner, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
         {
-            gameManager.DoPlacement(new Placement(player, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
+            gameManager.DoPlacement(new Placement(pieceOwner, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
         }
-        else if (e.keyCode == KeyCode.Alpha2 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId))))
+        else if (e.keyCode == KeyCode.Alpha2 && gameManager.tak.IsLegalMove(new Placement(pieceOwner, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId))))
         {
-            gameManager.DoPlacement(new Placement(player, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId)));
+            gameManager.DoPlacement(new Placement(pieceOwner, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId)));
         }
-        else if (e.keyCode == KeyCode.Alpha3 && gameManager.tak.IsLegalMove(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId))))
+        else if (e.keyCode == KeyCode.Alpha3 && gameManager.tak.IsLegalMove(new Placement(pieceOwner, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId))))
         {
-            gameManager.DoPlacement(new Placement(player, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
+            gameManager.DoPlacement(new Placement(pieceOwner, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
         }
 
         else if (e.keyCode == KeyCode.Space)
@@ -238,41 +245,44 @@ public class PlayerControl : MonoBehaviour
     private void SwapPlayer(int player)
     {
         Debug.Assert(Vector3.Magnitude(Settings.cameraOffset) % 1f == 0);
-        if (!zoomPrepared)
+        if (Settings.splitBoardView)
         {
-            t1 = 0;
-            startDist = Vector3.Distance(Settings.cameraOffset, Settings.location);
-            currentDist = (Vector3.Distance(Camera.main.transform.position, this.transform.position));
-            startZoom = Camera.main.transform.position;
-            zoomDestination = Camera.main.transform.position + (currentDist - startDist) * Camera.main.transform.forward;
-            zoomPrepared = true;
-        }
-        if (!rotationPrepared)
-        {
-            t2 = 0;
-            startRotation = this.transform.rotation;
-            endRotation = Quaternion.Euler(0, (360 / player) % 360, 0);
-            rotationPrepared = true;
-        }
+            if (!zoomPrepared)
+            {
+                t1 = 0;
+                startDist = Vector3.Distance(Settings.cameraOffset, Settings.location);
+                currentDist = (Vector3.Distance(Camera.main.transform.position, this.transform.position));
+                startZoom = Camera.main.transform.position;
+                zoomDestination = Camera.main.transform.position + (currentDist - startDist) * Camera.main.transform.forward;
+                zoomPrepared = true;
+            }
+            if (!rotationPrepared)
+            {
+                t2 = 0;
+                startRotation = this.transform.rotation;
+                endRotation = Quaternion.Euler(0, (360 / player) % 360, 0);
+                rotationPrepared = true;
+            }
 
-        if (Mathf.Round(Vector3.Distance(Camera.main.transform.position, this.transform.position)) != Mathf.Round(startDist))
-        {
-            t1 += Time.deltaTime / Settings.cameraTransitionTime;
-            Camera.main.transform.position = Vector3.Lerp(startZoom, zoomDestination, t1);
+            if (Mathf.Round(Vector3.Distance(Camera.main.transform.position, this.transform.position)) != Mathf.Round(startDist))
+            {
+                t1 += Time.deltaTime / Settings.cameraTransitionTime;
+                Camera.main.transform.position = Vector3.Lerp(startZoom, zoomDestination, t1);
+            }
+            else if (this.transform.rotation.eulerAngles.y != endRotation.eulerAngles.y)
+            {
+                t2 += Time.deltaTime / Settings.cameraTransitionTime;
+                this.transform.rotation = Quaternion.Lerp(startRotation, endRotation, t2);
+            }
+            else
+            {
+                zoomPrepared = false;
+                rotationPrepared = false;
+                snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
+            }
         }
-        else if (this.transform.rotation.eulerAngles.y != endRotation.eulerAngles.y)
-        {
-            t2 += Time.deltaTime / Settings.cameraTransitionTime;
-            this.transform.rotation = Quaternion.Lerp(startRotation, endRotation, t2);
-        }
-        else
-        {
-            zoomPrepared = false;
-            rotationPrepared = false;
-            this.commuters.Clear();
-            this.player = GameManager.currentPlayer;
-            snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
-        }
+        this.commuters.Clear();
+        this.player = GameManager.currentPlayer;
     }
 
     public void ProcessClick(GameObject clicked)

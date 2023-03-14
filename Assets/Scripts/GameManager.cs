@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(GetSpawnTime(placement) + Settings.spawnCooldown);
         if (gameOver)
         {
-            Debug.Log("Player " + currentPlayer + " Wins!");
+            this.EndGame(currentPlayer);
         }
         else
         {
@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
         tak.DoCommute(move);
         if (gameOver)
         {
-            Debug.Log("Player " + currentPlayer + " Wins!");
+            this.EndGame(currentPlayer);
         }
         else
         {
@@ -97,6 +97,26 @@ public class GameManager : MonoBehaviour
         GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
         cameraFocus.SetActive(true);
         GameObject.Find("Canvas/Title Screen").SetActive(false);
+    }
+
+    public void EndGame(int victor)
+    {
+        ui.victoryText.enabled = true;
+        ui.victoryText.text = "Player " + victor + " wins!";
+
+    }
+
+    public void HomeScreen()
+    {
+        GameObject.Find("Canvas/End Screen").SetActive(false);
+        GameObject board = GameObject.Find("Board");
+        Destroy(board);
+        GameObject.Find("Title Camera").SetActive(true);
+        GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
+        cameraFocus.SetActive(true);
+        GameObject.Find("Canvas/Title Screen").SetActive(true);
+
+
     }
 
     void NextPlayer()
@@ -125,8 +145,8 @@ public class GameManager : MonoBehaviour
  * - I somehow skipped player 2 when spawning pieces by going quickly
  * - I locked up the wasd controlls earlier
  * - Animation is still bad; lag after first one
- * - Parent setting for animation must still be bad since I couldn't commute with the right pieces at one point. Cutoff not changing as expected (stayed the same) -- ProcessClick/BuildCommute are flawed
- * - Capstones that jump on elevated standing stones do not flatten (but they go where they are supposed to)
+ * - Parent setting for animation must still be bad since I couldn't commute with the right pieces at one point.
+ * - Couldnt make 3 jumps to flatten: W-B-Wc _ _ Bss
  */
 
 /*
@@ -135,4 +155,5 @@ public class GameManager : MonoBehaviour
  * - Textures
  * - Sounds effects
  * - Car drive across path
+ * - DoMove usless in Tak
  */
