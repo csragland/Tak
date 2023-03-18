@@ -5,6 +5,8 @@ public class PlayerControl : MonoBehaviour
 {
     public GameManager gameManager;
 
+    private readonly KeyCode[] actions = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Space };
+
     float horizontalInput;
     float verticalInput;
 
@@ -114,7 +116,6 @@ public class PlayerControl : MonoBehaviour
         Event e = Event.current;
         if (e.type == EventType.KeyDown && player == GameManager.currentPlayer)
         {
-
             this.CheckArrowOver(e);
 
             this.CheckMove(e);
@@ -169,27 +170,31 @@ public class PlayerControl : MonoBehaviour
     private void CheckMove(Event e)
     {
         int pieceOwner = gameManager.tak.turnNum > 2 ? player : player == 1 ? 2 : 1;
-        if (e.keyCode == KeyCode.Alpha1 && gameManager.tak.IsLegalMove(new Placement(pieceOwner, PieceType.STONE, Utils.NumToTile(this.currentTileId))))
+        Move move;
+        if (e.keyCode == KeyCode.Alpha1)
         {
-            gameManager.DoPlacement(new Placement(pieceOwner, PieceType.STONE, Utils.NumToTile(this.currentTileId)));
+            move = new Placement(pieceOwner, PieceType.STONE, Utils.NumToTile(this.currentTileId));
         }
-        else if (e.keyCode == KeyCode.Alpha2 && gameManager.tak.IsLegalMove(new Placement(pieceOwner, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId))))
+        else if (e.keyCode == KeyCode.Alpha2)
         {
-            gameManager.DoPlacement(new Placement(pieceOwner, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId)));
+            move = new Placement(pieceOwner, PieceType.BLOCKER, Utils.NumToTile(this.currentTileId));
         }
-        else if (e.keyCode == KeyCode.Alpha3 && gameManager.tak.IsLegalMove(new Placement(pieceOwner, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId))))
+        else if (e.keyCode == KeyCode.Alpha3)
         {
-            gameManager.DoPlacement(new Placement(pieceOwner, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId)));
+            move = new Placement(pieceOwner, PieceType.CAPSTONE, Utils.NumToTile(this.currentTileId));
         }
-
         else if (e.keyCode == KeyCode.Space)
         {
-            Commute commute = this.BuildCommute(Utils.NumToTile(this.currentTileId));
-            if (gameManager.tak.IsLegalMove(commute))
-            {
-                gameManager.DoCommute(commute);
-            }
-            this.commuters.Clear();
+            move = this.BuildCommute(Utils.NumToTile(this.currentTileId));
+        }
+        else
+        {
+            return;
+        }
+
+        if (gameManager.tak.IsLegalMove(move))
+        {
+            gameManager.DoMove(move);
         }
     }
 
@@ -337,7 +342,7 @@ public class PlayerControl : MonoBehaviour
 
     private Commute BuildCommute(Tile end)
     {
-        List<Jump> jumps = new List<Jump>();
+        List<Jump> jumps = new();
         Tile start = Utils.NumToTile(this.commuters[0].transform.parent.GetSiblingIndex());
         int[] direction = new int[] { (end.row - start.row) / this.commuters.Count, (end.col - start.col) / this.commuters.Count };
         Tile startTile = start;

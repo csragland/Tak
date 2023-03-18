@@ -1,11 +1,13 @@
 using System;
-using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Tak
 {
     public List<Piece>[,] board;
+
+    public List<(Move, PoppingInfo)> moveStack;
 
     public int[,] piecesSpawned = new int[,] { {0, 0}, {0, 0} };
 
@@ -18,18 +20,32 @@ public class Tak
         this.board = takBoard;
     }
 
-    //public void DoMove(Move move)
-    //{
-    //    if (move.GetType() == typeof(Placement))
-    //    {
-    //        this.DoPlacement((Placement)move);
-    //    }
-    //    if (move.GetType() == typeof(Commute))
-    //    {
-    //        this.DoCommute((Commute)move);
-    //    }
-    //    this.turnNum += 1;
-    //}
+    public void DoMove(Move move)
+    {
+        if (move.GetType() == typeof(Placement))
+        {
+            this.DoPlacement((Placement)move);
+            this.moveStack.Add((move, null));
+        }
+        if (move.GetType() == typeof(Commute))
+        {
+            this.DoCommute((Commute)move);
+        }
+        this.turnNum += 1;
+    }
+
+    public void UndoMove(Move move)
+    {
+        if (move.GetType() == typeof(Placement))
+        {
+            this.DoPlacement((Placement)move);
+        }
+        if (move.GetType() == typeof(Commute))
+        {
+            this.DoCommute((Commute)move);
+        }
+        this.turnNum += 1;
+    }
 
     public bool IsLegalMove(Move move)
     { 
@@ -61,8 +77,13 @@ public class Tak
             this.board[move.destination.row, move.destination.col].Add(piece);
             int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
             this.piecesSpawned[move.player - 1, pieceIndex] += 1;
-            this.turnNum += 1;
         }
+    }
+
+    public void UndoPlacement(Placement move)
+    {
+        List<Piece> stack = this.board[move.destination.row, move.destination.col];
+        stack.RemoveAt(stack.Count - 1);
     }
 
     public void DoCommute(Commute move)
@@ -73,24 +94,50 @@ public class Tak
             {
                 this.DoJump(jump);
             }
-            this.turnNum += 1;
         }
     }
 
-    public void DoJump(Jump jump)
+    public void UndoCommute((Commute, PoppingInfo) commuteData)
+    {
+        // commute, int[] numJumpers, flatten
+        Commute commute = commuteData.Item1;
+        PoppingInfo info = commuteData.Item2;
+        Jump first = commute.jumps[0];
+        Jump last = commute.jumps[^1];
+        List<Piece> restack = new();
+        for (int i = 0; i < commute.jumps.Count; i++)
+        {
+            Jump jump = commute.jumps[i];
+            int next = i == commute.jumps.Count - 1 ? 0 : info.numPieces[i + 1];
+            int numPiecesToAdd = info.numPieces[i] - next;
+            List<Piece> targetStack = this.board[jump.destination.row, jump.destination.col];
+            restack.AddRange(targetStack.GetRange(targetStack.Count - numPiecesToAdd, numPiecesToAdd));
+            targetStack.RemoveRange(targetStack.Count - numPiecesToAdd, numPiecesToAdd);
+        }
+        this.board[first.origin.row, first.origin.col].AddRange(restack);
+        if (info.doesFlatten)
+        {
+            List<Piece> final = this.board[last.destination.row, last.destination.col];
+            final[^1].type = PieceType.BLOCKER;
+        }
+    }
+
+    private void DoJump(Jump jump)
     {
         List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
         List<Piece> endStack = this.board[jump.destination.row, jump.destination.col];
         // Flatten Standing Stones with lone Capstones
         if (this.JumpWillFlatten(jump))
         {
-            endStack[endStack.Count - 1].type = PieceType.STONE;
+            endStack[^1].type = PieceType.STONE;
         }
-        while (startStack.Count - jump.cutoff > 0)
-        {
-            endStack.Add(startStack[jump.cutoff]);
-            startStack.RemoveAt(jump.cutoff);
-        }
+        endStack.AddRange(startStack.GetRange(jump.cutoff, startStack.Count - 1));
+        startStack.RemoveRange(jump.cutoff, startStack.Count - 1);
+        //while (startStack.Count - jump.cutoff > 0)
+        //{
+        //    endStack.Add(startStack[jump.cutoff]);
+        //    startStack.RemoveAt(jump.cutoff);
+        //}
     }
 
     public bool JumpWillFlatten(Jump jump)
@@ -133,6 +180,7 @@ public class Tak
             }
 
             List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
+            Debug.Log(startStack.Count);
             if (i == 0 && startStack.Count == 0)
             {
                 return false;
@@ -235,7 +283,7 @@ public class Tak
         {
             return null;
         }
-        return stack[stack.Count - 1];
+        return stack[^1];
     }
 
 }

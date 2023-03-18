@@ -10,9 +10,10 @@ public class GameManager : MonoBehaviour
 
     public static int currentPlayer = 1;
 
+    public static bool gameOver = false;
+
     private bool controlsLocked = false;
 
-    public static bool gameOver = false;
 
     // Start is called before the first frame update
     void Start()
@@ -31,61 +32,50 @@ public class GameManager : MonoBehaviour
 
     }
 
-    public void DoPlacement(Placement move)
+    public void DoMove(Move move)
     {
-        if (!controlsLocked)
+        if (controlsLocked)
         {
-            StartCoroutine(PlacePiece(move));
+            return;
         }
+
+        if (tak.EndsGame(move))
+        {
+            gameOver = true;
+        }
+
+        if (move.GetType() == typeof(Placement))
+        {
+            StartCoroutine(PlacePiece((Placement)move));
+        }
+        if (move.GetType() == typeof(Commute))
+        {
+            StartCoroutine(StartCommute((Commute)move));
+        }
+
+        if (gameOver)
+        {
+            this.EndGame(currentPlayer);
+        }
+        else
+        {
+            this.NextPlayer();
+        }
+        tak.DoMove(move);
     }
 
     private IEnumerator PlacePiece(Placement placement)
     {
         controlsLocked = true;
-        if (tak.EndsGame(placement))
-        {
-            gameOver = true;
-        }
         ui.DoPlacement(placement);
-        tak.DoPlacement(placement);
         yield return new WaitForSeconds(GetSpawnTime(placement) + Settings.spawnCooldown);
-        if (gameOver)
-        {
-            this.EndGame(currentPlayer);
-        }
-        else
-        {
-            this.NextPlayer();
-        }
         controlsLocked = false;
-    }
-
-
-    public void DoCommute(Commute move)
-    {
-        if (!controlsLocked)
-        {
-            StartCoroutine(StartCommute(move));
-        }
     }
 
     public IEnumerator StartCommute(Commute move)
     {
         controlsLocked = true;
-        if (tak.EndsGame(move))
-        {
-            gameOver = true;
-        }
         yield return StartCoroutine(ui.DoCommute(move));
-        tak.DoCommute(move);
-        if (gameOver)
-        {
-            this.EndGame(currentPlayer);
-        }
-        else
-        {
-            this.NextPlayer();
-        }
         controlsLocked = false;
     }
 
@@ -103,7 +93,7 @@ public class GameManager : MonoBehaviour
     {
         ui.victoryText.enabled = true;
         ui.victoryText.text = "Player " + victor + " wins!";
-
+        controlsLocked = true;
     }
 
     public void HomeScreen()
@@ -115,11 +105,9 @@ public class GameManager : MonoBehaviour
         GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
         cameraFocus.SetActive(true);
         GameObject.Find("Canvas/Title Screen").SetActive(true);
-
-
     }
 
-    void NextPlayer()
+    private void NextPlayer()
     {
         currentPlayer = currentPlayer == 1 ? 2 : 1;
         ui.playerText.text = "Player " + currentPlayer;
@@ -142,11 +130,12 @@ public class GameManager : MonoBehaviour
 
 /*
  * BUGS:
+ * - EndsGame function only checks if commute finishes at winning tile
  * - I somehow skipped player 2 when spawning pieces by going quickly
  * - I locked up the wasd controlls earlier
  * - Animation is still bad; lag after first one
  * - Parent setting for animation must still be bad since I couldn't commute with the right pieces at one point.
- * - Couldnt make 3 jumps to flatten: W-B-Wc _ _ Bss
+ * - Couldnt make 3 jumps to flatten: W-B-Wc _ _ BssS
  */
 
 /*
@@ -155,5 +144,8 @@ public class GameManager : MonoBehaviour
  * - Textures
  * - Sounds effects
  * - Car drive across path
- * - DoMove usless in Tak
+ * UNDO FUNCTIONALITY
+ * - Need to append to move stack for commutes (which involves calculating how many pieces move per jump)
+ * - Need to test the undo function and the modified jump function
+ * - Don't forget this is all to fix the latest bug!
  */

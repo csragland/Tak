@@ -16,6 +16,13 @@ public class Piece
         this.type = type;
         this.player = player;
     }
+
+    public override string ToString()
+    {
+        string playerString = player == 1 ? "W" : "B";
+        string pieceString = type == PieceType.STONE ? "S" : type == PieceType.BLOCKER ? "Ss" : "Cs";
+        return playerString + "_" + pieceString;
+    }
 }
 
 public class Tile
@@ -52,6 +59,29 @@ public class Jump
     {
         return new int[] { this.destination.row - this.origin.row, this.destination.col - this.origin.col };
     }
+
+    public override string ToString()
+    {
+        int[] direction = GetDirection();
+        string directionString;
+        if (direction[0] == 1)
+        {
+            directionString = "down";
+        }
+        else if (direction[0] == -1)
+        {
+            directionString = "up";
+        }
+        else if (direction[1] == 1)
+        {
+            directionString = "right";
+        }
+        else
+        {
+            directionString = "left";
+        }
+        return this.cutoff + "- " + directionString;
+    }
 }
 
 public abstract class Move
@@ -82,5 +112,17 @@ public class Commute : Move
         this.player = playerNumber;
         this.jumps = path;
         this.destination = path[path.Count - 1].destination;
+    }
+}
+
+public class PoppingInfo
+{
+    public int[] numPieces;
+    public bool doesFlatten;
+
+    public PoppingInfo(int[] numPieces, bool doesFlatten)
+    {
+        this.numPieces = numPieces;
+        this.doesFlatten = doesFlatten;
     }
 }
