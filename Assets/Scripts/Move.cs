@@ -120,6 +120,11 @@ public class PoppingInfo
     public int[] numPieces;
     public bool doesFlatten;
 
+    public PoppingInfo()
+    {
+        this.doesFlatten = false;
+    }
+
     public PoppingInfo(int[] numPieces, bool doesFlatten)
     {
         this.numPieces = numPieces;

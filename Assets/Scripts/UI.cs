@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
-//using System;
 
 public class UI : MonoBehaviour
 {
@@ -113,6 +112,8 @@ public class UI : MonoBehaviour
 
     public IEnumerator DoCommute(Commute commute)
     {
+
+        bool flatten = gameManager.tak.CommuteWillFlatten(commute);
         for (int i = 0; i < commute.jumps.Count; i++)
         {
             Jump jump = commute.jumps[i];
@@ -121,15 +122,10 @@ public class UI : MonoBehaviour
             int newStackIndex = 0;
             float timeToWait = 0;
             bool baseTimeSet = false;
-            bool flatten = false;
             List<GameObject> jumpers = new();
             if (i < commute.jumps.Count - 1)
             {
                 timeToWait += Settings.jumpCooldown;
-            }
-            else
-            {
-                flatten = gameManager.tak.JumpWillFlatten(jump);
             }
             for (int j = jump.cutoff; j < tile.transform.childCount; j++)
             {
@@ -137,7 +133,7 @@ public class UI : MonoBehaviour
                 jumpers.Add(pieceObj);
                 PieceUI piece = pieceObj.GetComponent<PieceUI>();
                 Vector3 endPosition = endStack.transform.position + ((Settings.tileDimensions.y + GetPieceHeight(piece.gameObject)) / 2) * Vector3.up + (newStackIndex * GetPieceHeight(stone) + (endStack.transform.childCount) * this.GetPieceHeight(stone)) * Vector3.up;
-                if (flatten)
+                if (flatten && i == commute.jumps.Count - 1)
                 {
                     endPosition.y += GetPieceHeight(blocker) - GetPieceHeight(stone);
                     piece.GetComponent<Collider>().isTrigger = true;
@@ -186,20 +182,4 @@ public class UI : MonoBehaviour
             return 0;
         }
     }
-
-    //private bool Migrated(Jump jump)
-    //{
-    //    GameObject tile = Utils.GetUITile(jump.destination);
-    //    for (int i = jump.cutoff; i < tile.transform.childCount; i++)
-    //    {
-    //        //GameObject endStack = Utils.GetUITile(jump.destination);
-    //        PieceUI pieceData = tile.transform.GetChild(i).GetComponent<PieceUI>();
-    //        if (!pieceData.transform.IsChildOf(tile.transform))
-    //        {
-    //            Debug.Log("Not migrated");
-    //            return false;
-    //        }
-    //    }
-    //    return true;
-    //}
 }

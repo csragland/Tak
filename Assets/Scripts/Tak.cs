@@ -1,23 +1,30 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class Tak
 {
-    public List<Piece>[,] board;
+    private List<Piece>[,] board;
 
-    public List<(Move, PoppingInfo)> moveStack;
+    private Stack<(Move, PoppingInfo)> moveStack = new();
 
-    public int[,] piecesSpawned = new int[,] { {0, 0}, {0, 0} };
+    private int[,] piecesSpawned = new int[,] { {0, 0}, {0, 0} };
 
-    public int[] maxPieces = new int[] { 17, 1 };
+    private readonly int[] maxPieces = new int[] { 17, 1 };
 
     public int turnNum = 1;
     
-    public Tak(List<Piece>[,] takBoard)
+    public Tak(int dimension)
     {
-        this.board = takBoard;
+        List<Piece>[,] board = new List<Piece>[dimension, dimension];
+        for (int i = 0; i < dimension; i++)
+        {
+            for (int j = 0; j < dimension; j++)
+            {
+                board[i, j] = new List<Piece>();
+            }
+        }
+        this.board = board;
     }
 
     public void DoMove(Move move)
@@ -25,7 +32,7 @@ public class Tak
         if (move.GetType() == typeof(Placement))
         {
             this.DoPlacement((Placement)move);
-            this.moveStack.Add((move, null));
+            this.moveStack.Push((move, null));
         }
         if (move.GetType() == typeof(Commute))
         {
@@ -34,17 +41,18 @@ public class Tak
         this.turnNum += 1;
     }
 
-    public void UndoMove(Move move)
+    public void UndoMove()
     {
-        if (move.GetType() == typeof(Placement))
+        (Move, PoppingInfo) previous = moveStack.Pop();
+        if (previous.Item1.GetType() == typeof(Placement))
         {
-            this.DoPlacement((Placement)move);
+            this.UndoPlacement(previous);
         }
-        if (move.GetType() == typeof(Commute))
+        if (previous.Item1.GetType() == typeof(Commute))
         {
-            this.DoCommute((Commute)move);
+            this.UndoCommute(((Commute, PoppingInfo))previous);
         }
-        this.turnNum += 1;
+        this.turnNum -= 1;
     }
 
     public bool IsLegalMove(Move move)
@@ -61,6 +69,14 @@ public class Tak
         return false;
     }
 
+    public bool CommuteWillFlatten(Commute commute)
+    {
+        Piece jumper = this.GetCrown(commute.jumps[0].origin);
+        Piece victim = this.GetCrown(commute.jumps[^1].destination);
+        return (jumper is not null) && jumper.type == PieceType.CAPSTONE
+            && (victim is not null) && victim.type == PieceType.BLOCKER;
+    }
+
     public bool EndsGame(Move move)
     {
         bool[,] visited = new bool[Settings.dimension, Settings.dimension];
@@ -68,38 +84,45 @@ public class Tak
         return Math.Max(spans[1] - spans[0], spans[3] - spans[2]) >= Settings.dimension - 1;
     }
 
-    public void DoPlacement(Placement move)
+    private void DoPlacement(Placement move)
     {
-        if (IsLegalMove(move))
-        {
-            //int pieceOwner = this.turnNum > 2 ? move.player : move.player == 1 ? 2 : 1;
-            Piece piece = new Piece(move.piece, move.player);
-            this.board[move.destination.row, move.destination.col].Add(piece);
-            int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
-            this.piecesSpawned[move.player - 1, pieceIndex] += 1;
-        }
+        //int pieceOwner = this.turnNum > 2 ? move.player : move.player == 1 ? 2 : 1;
+        Piece piece = new(move.piece, move.player);
+        this.board[move.destination.row, move.destination.col].Add(piece);
+        int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
+        this.piecesSpawned[move.player - 1, pieceIndex] += 1;
     }
 
-    public void UndoPlacement(Placement move)
+    private void UndoPlacement((Move, PoppingInfo) placementData)
     {
+        Move move = placementData.Item1;
         List<Piece> stack = this.board[move.destination.row, move.destination.col];
         stack.RemoveAt(stack.Count - 1);
     }
 
-    public void DoCommute(Commute move)
+    private void DoCommute(Commute move)
     {
-        if (this.IsLegalMove(move))
+
+        PoppingInfo fullInfo = new(new int[move.jumps.Count], false);
+        int numPiecesJumped;
+        for (int i = 0; i < move.jumps.Count; i++)
         {
-            foreach (var jump in move.jumps)
-            {
-                this.DoJump(jump);
-            }
+            numPiecesJumped = DoJump(move.jumps[i]);
+            fullInfo.numPieces[i] = numPiecesJumped;
         }
+        fullInfo.doesFlatten = CommuteWillFlatten(move);
+        if (fullInfo.doesFlatten)
+        {
+            Jump last = move.jumps[^1];
+            List<Piece> endStack = this.board[last.destination.row, last.destination.col];
+            endStack[^1].type = PieceType.STONE;
+        }
+        this.moveStack.Push((move, fullInfo));
     }
 
-    public void UndoCommute((Commute, PoppingInfo) commuteData)
+
+    private void UndoCommute((Commute, PoppingInfo) commuteData)
     {
-        // commute, int[] numJumpers, flatten
         Commute commute = commuteData.Item1;
         PoppingInfo info = commuteData.Item2;
         Jump first = commute.jumps[0];
@@ -121,32 +144,15 @@ public class Tak
             final[^1].type = PieceType.BLOCKER;
         }
     }
-
-    private void DoJump(Jump jump)
+    
+    private int DoJump(Jump jump)
     {
         List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
         List<Piece> endStack = this.board[jump.destination.row, jump.destination.col];
-        // Flatten Standing Stones with lone Capstones
-        if (this.JumpWillFlatten(jump))
-        {
-            endStack[^1].type = PieceType.STONE;
-        }
-        endStack.AddRange(startStack.GetRange(jump.cutoff, startStack.Count - 1));
-        startStack.RemoveRange(jump.cutoff, startStack.Count - 1);
-        //while (startStack.Count - jump.cutoff > 0)
-        //{
-        //    endStack.Add(startStack[jump.cutoff]);
-        //    startStack.RemoveAt(jump.cutoff);
-        //}
-    }
-
-    public bool JumpWillFlatten(Jump jump)
-    {
-        Piece jumper = this.GetCrown(jump.origin);
-        Piece victim = this.GetCrown(jump.destination);
-        return this.board[jump.origin.row, jump.origin.col].Count - 1 == jump.cutoff
-            && (jumper is not null) && jumper.type == PieceType.CAPSTONE
-            && (victim is not null) && victim.type == PieceType.BLOCKER;
+        int numPieces = startStack.Count - jump.cutoff;
+        endStack.AddRange(startStack.GetRange(jump.cutoff, numPieces));
+        startStack.RemoveRange(jump.cutoff, numPieces);
+        return numPieces;
     }
 
     private bool IsLegalMove(Placement move)
@@ -170,17 +176,23 @@ public class Tak
             return false;
         }
 
+        int[] numPiecesMoved = new int[move.jumps.Count];
         for (int i = 0; i < move.jumps.Count; i++)
         {
             Jump jump = move.jumps[i];
+            List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
+
+            if (i > 0)
+            {
+                numPiecesMoved[i] += numPiecesMoved[i - 1];
+            }
+            numPiecesMoved[i] += startStack.Count - jump.cutoff;
 
             if (!jump.GetDirection().SequenceEqual(direction))
             {
                 return false;
             }
 
-            List<Piece> startStack = this.board[jump.origin.row, jump.origin.col];
-            Debug.Log(startStack.Count);
             if (i == 0 && startStack.Count == 0)
             {
                 return false;
@@ -206,15 +218,16 @@ public class Tak
             {
                 return false;
             }
-            if (endCrown.type == PieceType.BLOCKER && !(startCrown.type == PieceType.CAPSTONE && jump.cutoff == startStack.Count - 1))
+            if (endCrown.type == PieceType.BLOCKER && !(startCrown.type == PieceType.CAPSTONE && numPiecesMoved[i] == 1))
             {
                 return false;
             }
         }
+
         return true;
     }
 
-    public int[] FindSpan(int player, Tile tile, bool[,] visited)
+    private int[] FindSpan(int player, Tile tile, bool[,] visited)
     {
         visited[tile.row, tile.col] = true;
         int[] span = { tile.row, tile.row, tile.col, tile.col };
@@ -233,13 +246,13 @@ public class Tak
         return span;
     }
 
-    public List<Tile> GetNeighbors(int player, Tile tile)
+    private List<Tile> GetNeighbors(int player, Tile tile)
     {
-        List<Tile> neighbors = new List<Tile>();
+        List<Tile> neighbors = new();
 
         if (tile.row < Settings.dimension - 1)
         {
-            Tile tileUp = new Tile(tile.row + 1, tile.col);
+            Tile tileUp = new(tile.row + 1, tile.col);
             Piece crown = this.GetCrown(tileUp);
             if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
@@ -248,7 +261,7 @@ public class Tak
         }
         if (tile.row > 0)
         {
-            Tile tileDown = new Tile(tile.row - 1, tile.col);
+            Tile tileDown = new(tile.row - 1, tile.col);
             Piece crown = this.GetCrown(tileDown);
             if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
@@ -257,7 +270,7 @@ public class Tak
         }
         if (tile.col < Settings.dimension - 1)
         {
-            Tile tileRight = new Tile(tile.row, tile.col + 1);
+            Tile tileRight = new(tile.row, tile.col + 1);
             Piece crown = this.GetCrown(tileRight);
             if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
@@ -266,7 +279,7 @@ public class Tak
         }
         if (tile.col > 0)
         {
-            Tile tileLeft = new Tile(tile.row, tile.col - 1);
+            Tile tileLeft = new(tile.row, tile.col - 1);
             Piece crown = this.GetCrown(tileLeft);
             if (crown is not null && crown.player == player && crown.type != PieceType.BLOCKER)
             {
@@ -276,7 +289,7 @@ public class Tak
         return neighbors;
     }
 
-    public Piece GetCrown(Tile tile)
+    private Piece GetCrown(Tile tile)
     {
         List<Piece> stack = this.board[tile.row, tile.col];
         if (stack.Count == 0)
@@ -286,4 +299,17 @@ public class Tak
         return stack[^1];
     }
 
+    private string StringifyStack(List<Piece> stack)
+    {
+        if (stack.Count == 0)
+        {
+            return "_";
+        }
+        string s = "";
+        foreach (Piece piece in stack)
+        {
+            s += piece + ", ";
+        }
+        return s;
+    }
 }

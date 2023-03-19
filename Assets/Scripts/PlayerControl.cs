@@ -5,8 +5,6 @@ public class PlayerControl : MonoBehaviour
 {
     public GameManager gameManager;
 
-    private readonly KeyCode[] actions = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Space };
-
     float horizontalInput;
     float verticalInput;
 

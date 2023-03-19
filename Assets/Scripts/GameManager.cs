@@ -20,15 +20,7 @@ public class GameManager : MonoBehaviour
     {
         ui = GameObject.Find("Game Manager").GetComponent<UI>();
 
-        List<Piece>[,] boardData = new List<Piece>[Settings.dimension, Settings.dimension];
-        for (int i = 0; i < Settings.dimension; i++)
-        {
-            for (int j = 0; j < Settings.dimension; j++)
-            {
-                boardData[i, j] = new List<Piece>();
-            }
-        }
-        tak = new Tak(boardData);
+        tak = new Tak(Settings.dimension);
 
     }
 
@@ -38,6 +30,11 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
+        StartCoroutine(ExecuteMove(move));
+    }
+
+    private IEnumerator ExecuteMove(Move move)
+    {
 
         if (tak.EndsGame(move))
         {
@@ -46,12 +43,13 @@ public class GameManager : MonoBehaviour
 
         if (move.GetType() == typeof(Placement))
         {
-            StartCoroutine(PlacePiece((Placement)move));
+            yield return StartCoroutine(PlacePiece((Placement)move));
         }
         if (move.GetType() == typeof(Commute))
         {
-            StartCoroutine(StartCommute((Commute)move));
+            yield return StartCoroutine(StartCommute((Commute)move));
         }
+        tak.DoMove(move);
 
         if (gameOver)
         {
@@ -61,7 +59,6 @@ public class GameManager : MonoBehaviour
         {
             this.NextPlayer();
         }
-        tak.DoMove(move);
     }
 
     private IEnumerator PlacePiece(Placement placement)
