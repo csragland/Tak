@@ -10,9 +10,6 @@ public class UI : MonoBehaviour
     
     public GameObject gameBoard;
 
-    public float pieceSpawnHeight;
-    public float pieceNum = 0;
-
     public GameObject stone;
     public GameObject blocker;
     public GameObject capstone;
@@ -26,6 +23,8 @@ public class UI : MonoBehaviour
     public TextMeshProUGUI playerText;
     public TextMeshProUGUI victoryText;
 
+    private float pieceNum = 0;
+
     // Start is called before the first frame update
     private void Start()
     {
@@ -36,6 +35,7 @@ public class UI : MonoBehaviour
         startButton.onClick.AddListener(gameManager.StartGame);
     }
 
+    // Generate game board of variable size in predetermined location
     public void InitalizeBoard(int dimension)
     {
         Debug.Assert(!Utils.IsEven(dimension));
@@ -43,6 +43,7 @@ public class UI : MonoBehaviour
         Vector3 startPoint = Settings.location + new Vector3(-Mathf.Floor(dimension / 2) * Settings.tileDimensions.x, 0, Mathf.Floor(dimension / 2) * Settings.tileDimensions.z);
         Vector3 tilePosition = startPoint;
         int tileNum;
+        // Instaniate tiles while setting transform and properties
         for (int i = 0; i < dimension; i++)
         {
             for (int j = 0; j < dimension; j++)
@@ -62,11 +63,10 @@ public class UI : MonoBehaviour
             tilePosition.z -= Settings.tileDimensions.z;
             tilePosition.x = startPoint.x;
         }
-        Rigidbody rb = gameBoard.AddComponent<Rigidbody>();
-        rb.isKinematic = true;
     }
 
-    public void DoPlacement(Placement placement)
+    // Execute placement move in UI
+    public IEnumerator DoPlacement(Placement placement)
     {
         int row = placement.destination.row;
         int col = placement.destination.col;
@@ -75,44 +75,47 @@ public class UI : MonoBehaviour
         GameObject tile = GameObject.Find("Board/Tile_" + tileNum);
 
         GameObject objToSpawn = stone;
+        float pieceSpawnHeight = 0;
         float pieceHeight = 0;
         if (placement.piece == PieceType.STONE)
         {
             objToSpawn = stone;
-            this.pieceSpawnHeight = Settings.stoneSpawnHeight;
+            pieceSpawnHeight = Settings.stoneSpawnHeight;
             pieceHeight = GetPieceHeight(objToSpawn);
         }
         else if (placement.piece == PieceType.BLOCKER)
         {
             objToSpawn = blocker;
-            this.pieceSpawnHeight = Settings.blockerSpawnHeight;
+            pieceSpawnHeight = Settings.blockerSpawnHeight;
             pieceHeight = GetPieceHeight(objToSpawn);
         }
         else if (placement.piece == PieceType.CAPSTONE)
         {
             objToSpawn = capstone;
-            this.pieceSpawnHeight = Settings.capstoneSpawnHeight;
+            pieceSpawnHeight = Settings.capstoneSpawnHeight;
             pieceHeight = GetPieceHeight(objToSpawn);
         }
 
-        Vector3 spawnPos = tile.transform.position + this.pieceSpawnHeight * Vector3.up;
+        Vector3 spawnPos = tile.transform.position + pieceSpawnHeight * Vector3.up;
 
         GameObject pieceObj = Instantiate(objToSpawn, spawnPos, objToSpawn.transform.rotation);
         pieceObj.name = pieceNum.ToString();
         pieceNum++;
 
         PieceUI pieceData = pieceObj.GetComponent<PieceUI>();
-        pieceData.isBeingSpawned = true;
-        pieceData.destination = tile.transform.position + ((Settings.tileDimensions.y + pieceHeight) / 2) * Vector3.up + ((tile.transform.childCount) * pieceHeight) * Vector3.up;
+        Vector3 destination = tile.transform.position + ((Settings.tileDimensions.y + pieceHeight) / 2) * Vector3.up + ((tile.transform.childCount) * pieceHeight) * Vector3.up;
+        pieceData.SetSpawn(destination);
         pieceData.type = placement.piece;
         pieceData.player = placement.player;
 
         pieceObj.transform.SetParent(tile.transform);
+
+        yield return new WaitForSeconds(Utils.GetSpawnTime(placement) + Settings.spawnCooldown);
     }
 
+    // Execute Commute move in UI
     public IEnumerator DoCommute(Commute commute)
     {
-
         bool flatten = gameManager.tak.CommuteWillFlatten(commute);
         for (int i = 0; i < commute.jumps.Count; i++)
         {
@@ -145,7 +148,7 @@ public class UI : MonoBehaviour
                     timeToWait += jumpData[2];
                     baseTimeSet = true;
                 }
-                piece.SetCommute(endPosition, endStack, jumpData);
+                piece.SetCommute(endPosition, jumpData);
                 newStackIndex++;
             }
             yield return new WaitForSeconds(timeToWait);
@@ -162,6 +165,7 @@ public class UI : MonoBehaviour
         }
     }
 
+    // Return in-game height of a certain type of piece
     public float GetPieceHeight(GameObject piece)
     {
         PieceType pieceType = piece.GetComponent<PieceUI>().type;

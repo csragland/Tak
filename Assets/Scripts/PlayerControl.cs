@@ -49,37 +49,43 @@ public class PlayerControl : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        //if (!this.initialized)
-        //{
-        //    currentTileId = (int)Mathf.Floor(Mathf.Pow(Settings.dimension, 2) / 2);
-        //    GameObject centerTile = GameObject.Find("Board/Tile_" + currentTileId);
-        //    centerTile.GetComponent<cakeslice.Outline>().enabled = true;
-        //    this.transform.position = centerTile.transform.position;
-        //    this.initialized = true;
-        //}
-        if (  Input.GetKey(KeyCode.A) && (!Settings.splitBoardView || (player == 1 && CompareRotations(Comparisons.LTE, 90)) || (player == 2 && (CompareRotations(Comparisons.LTE, -90) || CompareRotations(Comparisons.GT, 0))))  )
+        // Let the player rotate within rotation boundaries (none if "splitBoardView" is off)
+        if (Input.GetKey(KeyCode.A) &&
+            (!Settings.splitBoardView
+                || (player == 1 && CompareRotations(Comparisons.LTE, 90))
+                || (player == 2 && (CompareRotations(Comparisons.LTE, -90)
+                || CompareRotations(Comparisons.GT, 0)))))
         {
             horizontalInput = 1;
             snapStart = transform.rotation;
         }
-        else if (Input.GetKey(KeyCode.D) && (!Settings.splitBoardView || (player == 1 && CompareRotations(Comparisons.GTE, -90)) || (player == 2 && (CompareRotations(Comparisons.GTE, 90) || CompareRotations(Comparisons.LT, 0)))))
+        else if (Input.GetKey(KeyCode.D) &&
+            (!Settings.splitBoardView
+                || (player == 1 && CompareRotations(Comparisons.GTE, -90))
+                || (player == 2 && (CompareRotations(Comparisons.GTE, 90)
+                || CompareRotations(Comparisons.LT, 0)))))
         {
             horizontalInput = -1;
             snapStart = transform.rotation;
         }
+        // Reset rotation speed back to zero if no interaction
         else
         {
             horizontalInput = 0;
         }
 
-        if (Input.GetKey(KeyCode.W) && Vector3.Distance(Camera.main.transform.position, this.transform.position) > Settings.cameraMaxZoom)
+        // Let the player zoom within the zoom boundaries
+        if (Input.GetKey(KeyCode.W) &&
+            Vector3.Distance(Camera.main.transform.position, this.transform.position) > Settings.cameraMaxZoom)
         {
             verticalInput = 1;
         }
-        else if (Input.GetKey(KeyCode.S) && Vector3.Distance(Camera.main.transform.position, this.transform.position) < Settings.cameraMinZoom)
+        else if (Input.GetKey(KeyCode.S) &&
+            Vector3.Distance(Camera.main.transform.position, this.transform.position) < Settings.cameraMinZoom)
         {
             verticalInput = -1;
         }
+        // Reset the zoom speed back to zero if no interaction
         else
         {
             verticalInput = 0;
@@ -87,8 +93,10 @@ public class PlayerControl : MonoBehaviour
 
         if (player == GameManager.currentPlayer)
         {
+            // If the player isn't rotating and they are within range, snap to either 0 or 180 degrees
             if (horizontalInput == 0
-                && ((transform.rotation.y != 0
+                &&
+                ((transform.rotation.y != 0
                         && (player == 1 || !Settings.splitBoardView)
                         && CompareRotations(Comparisons.LTE, Settings.cameraSnapRadius, true))
                    || (transform.eulerAngles.y != 180
@@ -120,9 +128,9 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    // Remap arrow keys based on rotation and update tile currently in focus
     private void CheckArrowOver(Event e)
     {
-        // I can maybe make a function to map between quadrants and buttons (with matrices?)
         if (((e.keyCode == KeyCode.RightArrow && CompareRotations(Comparisons.LTE, 45, true))
             || (e.keyCode == KeyCode.UpArrow && CompareRotations(Comparisons.GT, 45) && CompareRotations(Comparisons.LT, 135))
             || (e.keyCode == KeyCode.DownArrow && CompareRotations(Comparisons.LT, -45) && CompareRotations(Comparisons.GT, -135))
@@ -165,8 +173,10 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    // Get player's intended move based on input and check if it is legal. Do the move if it is.
     private void CheckMove(Event e)
     {
+        // In the first turn of the game, players place their opponent's piece rather than their own
         int pieceOwner = gameManager.tak.turnNum > 2 ? player : player == 1 ? 2 : 1;
         Move move;
         if (e.keyCode == KeyCode.Alpha1)
@@ -196,26 +206,33 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
-
+    // Move camera focal point to the top of a tile's stack and outline interactable pieces
     private void SetFocus(int tileId)
     {
         GameObject tile = GameObject.Find("Board/Tile_" + tileId);
         int numChildren = tile.transform.childCount;
+        // If there are pieces on the stack, focus and outline the pieces
         if (numChildren > 0)
         {
+            // The "crown" is the piece at the top of a stack
             GameObject crown = tile.transform.GetChild(numChildren - 1).gameObject;
+            // Move the camera focal point to the crown
             this.transform.position = crown.transform.position;
+            // If the crown belongs to the current player, then apply outline to the stack
             if (crown.GetComponent<PieceUI>().player == GameManager.currentPlayer)
             {
+                bool stackAlreadyClicked = this.commuters.Count > 0 && commuters[^1].transform.IsChildOf(tile.transform);
                 for (int i = 0; i < numChildren; i++)
                 {
                     GameObject piece = tile.transform.GetChild(i).gameObject;
                     cakeslice.Outline outline = piece.GetComponent<cakeslice.Outline>();
-                    if (this.commuters.Count > 0 && commuters[commuters.Count - 1].transform.IsChildOf(tile.transform))
+                    // If stack has already been clicked on, apply memorized outline
+                    if (stackAlreadyClicked)
                     {
                         outline.enabled = this.outlineMemory[i].Item1;
                         outline.color = this.outlineMemory[i].Item2;
                     }
+                    // Otherwise, outline everything
                     else
                     {
                         outline.enabled = true;
@@ -224,6 +241,7 @@ public class PlayerControl : MonoBehaviour
                 }
             }
         }
+        // Otherwise, move focal point to center of tile and highlight tile
         else
         {
             this.transform.position = tile.transform.position;
@@ -231,6 +249,7 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    // Remove outline from tile and every piece on it
     private void Unfocus(int tileId)
     {
         GameObject tile = GameObject.Find("Board/Tile_" + tileId);
@@ -250,6 +269,7 @@ public class PlayerControl : MonoBehaviour
         Debug.Assert(Vector3.Magnitude(Settings.cameraOffset) % 1f == 0);
         if (Settings.splitBoardView)
         {
+            // Setting variables to allow for automatic perspective shift
             if (!zoomPrepared)
             {
                 t1 = 0;
@@ -267,16 +287,19 @@ public class PlayerControl : MonoBehaviour
                 rotationPrepared = true;
             }
 
+            // First automatically move camera to original zoom
             if (Mathf.Round(Vector3.Distance(Camera.main.transform.position, this.transform.position)) != Mathf.Round(startDist))
             {
                 t1 += Time.deltaTime / Settings.cameraTransitionTime;
                 Camera.main.transform.position = Vector3.Lerp(startZoom, zoomDestination, t1);
             }
+            // If camera is at original zoom, then rotate to opposite side of board
             else if (this.transform.rotation.eulerAngles.y != endRotation.eulerAngles.y)
             {
                 t2 += Time.deltaTime / Settings.cameraTransitionTime;
                 this.transform.rotation = Quaternion.Lerp(startRotation, endRotation, t2);
             }
+            // The zoom and rotation must be at the desired location, so declare ourselves done and redefine the center of view
             else
             {
                 zoomPrepared = false;
@@ -284,6 +307,7 @@ public class PlayerControl : MonoBehaviour
                 snapEnd = player == 1 ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, -180, 0);
             }
         }
+        // Reset list of pieces queued for a commute, if any, and sync current player
         this.commuters.Clear();
         this.player = GameManager.currentPlayer;
     }
@@ -295,11 +319,13 @@ public class PlayerControl : MonoBehaviour
         if (this.isBoarding && clicked.transform.IsChildOf(Utils.GetUITile(currentTileId).transform) && this.IsPlayerContolled(parent.gameObject))
         {
             // If no commuters exist OR what I am clicking on is a sibling of the other commuters but there are still less than <dimension> commuters AND I am clicking on a new tile
-            if (this.commuters.Count == 0 || (clicked.transform.IsChildOf(commuters[commuters.Count - 1].transform.parent) && commuters.Count < Settings.dimension) && !this.commuters.Contains(clicked))
+            if (this.commuters.Count == 0 || (clicked.transform.IsChildOf(commuters[^1].transform.parent) && commuters.Count < Settings.dimension) && !this.commuters.Contains(clicked))
             {
                 int clickedIndex = clicked.transform.GetSiblingIndex();
+                // Give green outline to clicked piece and add that piece to the list of commuters
                 commuters.Add(clicked);
                 clicked.GetComponent<cakeslice.Outline>().color = 1;
+                // Remove outline from the pieces below the one just clicked if they haven't previously been clicked
                 for (int i = 0; i < clickedIndex; i++)
                 {
                     Transform sibling = parent.GetChild(i);
@@ -310,12 +336,15 @@ public class PlayerControl : MonoBehaviour
                 }
                 this.SaveOutline(parent);
             }
+            // If I am clicking on an already clicked piece, I must be trying to unqueue commuters 
             else if (this.commuters.Contains(clicked))
             {
+                // Turn clicked piece back to yellow
                 clicked.GetComponent<cakeslice.Outline>().color = 0;
                 int index = this.commuters.IndexOf(clicked);
                 int stackIndex = parent.childCount - 1;
-                int bottomIndex = index < 1 ? 0 : commuters[index - 1].transform.GetSiblingIndex();
+                int bottomIndex = index < 1 ? 0 : commuters[index - 1].transform.GetSiblingIndex(); // Index of next piece currently in the list of commuters
+                // From the top of the stack to the the piece right above "bottomIndex", reenable outline and make it yellow
                 do
                 {
                     cakeslice.Outline outline = parent.GetChild(stackIndex).GetComponent<cakeslice.Outline>();
@@ -328,6 +357,7 @@ public class PlayerControl : MonoBehaviour
 
                 } while (stackIndex >= bottomIndex);
 
+                // Unqueue all commuters that lie at or above the piece that was just clicked
                 for (int i = this.commuters.Count - 1; i >= index; i--)
                 {
                     this.commuters.RemoveAt(i);
@@ -337,7 +367,7 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
-
+    // Take list of clicked pieces, compare that list with the stack those pieces belong to, and return the commute it represents
     private Commute BuildCommute(Tile end)
     {
         List<Jump> jumps = new();
@@ -357,6 +387,7 @@ public class PlayerControl : MonoBehaviour
         return new Commute(this.player, jumps);
     }
 
+    // Save outline information for each piece in a stack
     private void SaveOutline(Transform parent)
     {
         this.outlineMemory.Clear();
@@ -370,6 +401,7 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    // Utility for comparing the camera's current rotation with another rotation
     private bool CompareRotations(Comparisons operation, float rotation, bool abs = false)
     {
         if (operation == Comparisons.LT)
@@ -423,6 +455,7 @@ public class PlayerControl : MonoBehaviour
         return false;
     }
 
+    // Checks if the crown of a stack is owned by the current player or not
     private bool IsPlayerContolled(GameObject tile)
     {
         int numChildren = tile.transform.childCount;
@@ -435,6 +468,7 @@ public class PlayerControl : MonoBehaviour
         return false;
     }
 
+    // Maps rotations onto [-180, 180)
     private float MapAngle(float angle)
     {
         if (angle >= 180)

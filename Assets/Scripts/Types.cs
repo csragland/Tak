@@ -111,7 +111,7 @@ public class Commute : Move
     {
         this.player = playerNumber;
         this.jumps = path;
-        this.destination = path[path.Count - 1].destination;
+        this.destination = path[^1].destination;
     }
 }
 

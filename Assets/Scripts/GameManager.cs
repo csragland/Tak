@@ -14,7 +14,6 @@ public class GameManager : MonoBehaviour
     private bool controlsLocked = false;
 
 
-    // Start is called before the first frame update
     void Start()
     {
         ui = GameObject.Find("Game Manager").GetComponent<UI>();
@@ -23,6 +22,7 @@ public class GameManager : MonoBehaviour
 
     }
 
+    // Generate board, change view from title screen to gameplay
     public void StartGame()
     {
         ui.InitalizeBoard(Settings.dimension);
@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
         GameObject.Find("Canvas/Title Screen").SetActive(false);
     }
 
+    // Display victory screen and freeze game
     public void EndGame(int victor)
     {
         ui.victoryText.enabled = true;
@@ -40,6 +41,7 @@ public class GameManager : MonoBehaviour
         controlsLocked = true;
     }
 
+    // Do move if controls not locked
     public void DoMove(Move move)
     {
         if (controlsLocked)
@@ -49,6 +51,7 @@ public class GameManager : MonoBehaviour
         StartCoroutine(ExecuteMove(move));
     }
 
+    // Change from game view to home screen
     public void HomeScreen()
     {
         GameObject.Find("Canvas/End Screen").SetActive(false);
@@ -60,24 +63,30 @@ public class GameManager : MonoBehaviour
         GameObject.Find("Canvas/Title Screen").SetActive(true);
     }
 
+    // Coroutine for all move logic
     private IEnumerator ExecuteMove(Move move)
     {
-
+        // Check if the move about to be executed will conclude the game
         if (tak.EndsGame(move))
         {
             gameOver = true;
         }
 
+        // Lock controls so that the player cannot do a move while the current move is in progress
+        controlsLocked = true;
+        // First do move in the UI, which takes time, then update the game state in the tak object
         if (move.GetType() == typeof(Placement))
         {
-            yield return StartCoroutine(PlacePiece((Placement)move));
+            yield return StartCoroutine(ui.DoPlacement((Placement)move));
         }
         if (move.GetType() == typeof(Commute))
         {
-            yield return StartCoroutine(StartCommute((Commute)move));
+            yield return StartCoroutine(ui.DoCommute((Commute)move));
         }
         tak.DoMove(move);
+        controlsLocked = false;
 
+        // If the game is over, do endgame actions. Else, move on to the next turn.
         if (gameOver)
         {
             this.EndGame(currentPlayer);
@@ -88,38 +97,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private IEnumerator PlacePiece(Placement placement)
-    {
-        controlsLocked = true;
-        ui.DoPlacement(placement);
-        yield return new WaitForSeconds(GetSpawnTime(placement) + Settings.spawnCooldown);
-        controlsLocked = false;
-    }
-
-    private IEnumerator StartCommute(Commute move)
-    {
-        controlsLocked = true;
-        yield return StartCoroutine(ui.DoCommute(move));
-        controlsLocked = false;
-    }
-
+    // Do logic for cycling to the next player
     private void NextPlayer()
     {
         currentPlayer = currentPlayer == 1 ? 2 : 1;
         ui.playerText.text = "Player " + currentPlayer;
-    }
-
-    private float GetSpawnTime(Placement placement)
-    {
-        if (placement.piece == PieceType.STONE)
-        {
-            return Settings.stoneSpawnTime;
-        }
-        else if (placement.piece == PieceType.BLOCKER)
-        {
-            return Settings.blockerSpawnTime;
-        }
-        return Settings.capstoneSpawnTime;
     }
 
 }
@@ -138,4 +120,5 @@ public class GameManager : MonoBehaviour
  * - Victory effects (screen, highlight, road animation??)
  * - Textures
  * - Sounds effects
+ * - Apply matricies to CheckArrowOver?
  */

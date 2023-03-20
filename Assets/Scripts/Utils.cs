@@ -59,6 +59,19 @@ public static class Utils
         float horizontalVelocty = Settings.tileDimensions.x / totalTime;
         return new float[] { horizontalVelocty, verticalVelocity, totalTime };
     }
+    
+    public static float GetSpawnTime(Placement placement)
+    {
+        if (placement.piece == PieceType.STONE)
+        {
+            return Settings.stoneSpawnTime;
+        }
+        else if (placement.piece == PieceType.BLOCKER)
+        {
+            return Settings.blockerSpawnTime;
+        }
+        return Settings.capstoneSpawnTime;
+    }
 
     public static void PrintArray(int[] arr)
     {

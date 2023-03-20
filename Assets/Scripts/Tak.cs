@@ -8,9 +8,9 @@ public class Tak
 
     private Stack<(Move, PoppingInfo)> moveStack = new();
 
-    private int[,] piecesSpawned = new int[,] { {0, 0}, {0, 0} };
+    private int[,] numPiecesSpawned = new int[,] { {0, 0}, {0, 0} };
 
-    private readonly int[] maxPieces = new int[] { 17, 1 };
+    private readonly int[] maxNumPieces = new int[] { 17, 1 };
 
     public int turnNum = 1;
     
@@ -81,16 +81,17 @@ public class Tak
     {
         bool[,] visited = new bool[Settings.dimension, Settings.dimension];
         int[] spans = this.FindSpan(move.player, move.destination, visited);
+        // Check if there exists a path connecting opposites sides of the board that passes
+        // through the tile where the Player just did an action
         return Math.Max(spans[1] - spans[0], spans[3] - spans[2]) >= Settings.dimension - 1;
     }
 
     private void DoPlacement(Placement move)
     {
-        //int pieceOwner = this.turnNum > 2 ? move.player : move.player == 1 ? 2 : 1;
         Piece piece = new(move.piece, move.player);
         this.board[move.destination.row, move.destination.col].Add(piece);
         int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
-        this.piecesSpawned[move.player - 1, pieceIndex] += 1;
+        this.numPiecesSpawned[move.player - 1, pieceIndex] += 1;
     }
 
     private void UndoPlacement((Move, PoppingInfo) placementData)
@@ -162,7 +163,7 @@ public class Tak
         {
             return false;
         }
-        return this.board[move.destination.row, move.destination.col].Count == 0 && piecesSpawned[move.player - 1, pieceIndex] < maxPieces[pieceIndex];
+        return this.board[move.destination.row, move.destination.col].Count == 0 && numPiecesSpawned[move.player - 1, pieceIndex] < maxNumPieces[pieceIndex];
     }
 
     private bool IsLegalMove(Commute move)
@@ -170,7 +171,7 @@ public class Tak
         int[] direction = move.jumps[0].GetDirection();
         Piece startCrown = GetCrown(move.jumps[0].origin);
 
-
+        // Player can only jump one tile away
         if (Utils.OneNorm(direction) != 1)
         {
             return false;
@@ -188,36 +189,43 @@ public class Tak
             }
             numPiecesMoved[i] += startStack.Count - jump.cutoff;
 
+            // All jumps have to be in the same direction as the first
             if (!jump.GetDirection().SequenceEqual(direction))
             {
                 return false;
             }
 
+            // Pieces must exist in order to do jump
             if (i == 0 && startStack.Count == 0)
             {
                 return false;
             }
 
+            // Player must leave one piece behind after each jump, and they can't carry more than <dimension> in a jump
             if ((jump.cutoff < 1 && i > 0) || startStack.Count - jump.cutoff > Settings.dimension)
             {
                 return false;
             }
 
+            // Player can only jump with a stack they control
             if (i == 0 && startCrown.player != move.player)
             {
                 return false;
             }
 
+            // This was a legal jump if the player is jumping to an empty tile
             if (this.board[jump.destination.row, jump.destination.col].Count == 0)
             {
                 continue;
             }
 
             Piece endCrown = this.GetCrown(jump.destination);
+            // Nothing can jump on a Capstone
             if (endCrown.type == PieceType.CAPSTONE)
             {
                 return false;
             }
+            // Only Capstones can jump on standing stones if they are travelling alone
             if (endCrown.type == PieceType.BLOCKER && !(startCrown.type == PieceType.CAPSTONE && numPiecesMoved[i] == 1))
             {
                 return false;
@@ -227,6 +235,7 @@ public class Tak
         return true;
     }
 
+    // Use DFS to find the maximum and minimun indecies reachable from a tile via a chain of tiles the player controls
     private int[] FindSpan(int player, Tile tile, bool[,] visited)
     {
         visited[tile.row, tile.col] = true;
@@ -246,6 +255,7 @@ public class Tak
         return span;
     }
 
+    // Check the 4 2D directions and see which tiles in that direction have pieces you own as crowns
     private List<Tile> GetNeighbors(int player, Tile tile)
     {
         List<Tile> neighbors = new();
@@ -289,6 +299,7 @@ public class Tak
         return neighbors;
     }
 
+    // Return the top piece of a stack
     private Piece GetCrown(Tile tile)
     {
         List<Piece> stack = this.board[tile.row, tile.col];

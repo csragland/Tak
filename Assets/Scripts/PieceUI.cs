@@ -10,26 +10,23 @@ public class PieceUI : MonoBehaviour
     UI ui;
     PlayerControl playerControl;
 
-    public Vector3 origin;
-    public Vector3 destination;
+    private Vector3 origin;
+    private Vector3 destination;
 
     // Spawn Variables
-    public bool isBeingSpawned = false;
-    public GameObject destinationTile;
+    private bool isBeingSpawned = false;
     private Vector3 spawnRotationAxis;
     private float spawnRPS;
-    public float spawnTime;
-    float t = 0;
+    private float spawnTime;
+    private float t = 0;
 
     // Jump Variables
-    public bool isJumping;
+    private bool isJumping;
     private float jumpStartTime;
     private float jumpEndTime;
     private float jumpTime;
     private float jumpVy;
     private float jumpVxz;
-
-    //private Animator animator
 
     public PieceUI(PieceType type, int player)
     {
@@ -71,6 +68,7 @@ public class PieceUI : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        // Descend and spin this piece down to destination while it is first being placed
         if (this.isBeingSpawned)
         {
             if (this.transform.position != this.destination)
@@ -85,6 +83,7 @@ public class PieceUI : MonoBehaviour
                 t = 0;
             }
         }
+        // Use deterministic physics to simulate jumping
         else if (this.isJumping)
         {
 
@@ -102,18 +101,24 @@ public class PieceUI : MonoBehaviour
             {
                 this.isJumping = false;
                 this.transform.position = this.destination;
-                //this.transform.SetParent(destinationTile.transform);
             }
             
         }
     }
 
-    public void SetCommute(Vector3 destination, GameObject tile, float[] jumpData)
+    // Set variables to determine path of this piece during spawning
+    public void SetSpawn(Vector3 destination)
+    {
+        this.isBeingSpawned = true;
+        this.destination = destination;
+    }
+
+    // Set variables to determine path of this piece per determistic physics
+    public void SetCommute(Vector3 destination, float[] jumpData)
     {
         this.isJumping = true;
         this.origin = this.transform.position;
         this.destination = destination;
-        this.destinationTile = tile;
         this.jumpStartTime = Time.time;
         this.jumpVxz = jumpData[0];
         this.jumpVy = jumpData[1];
@@ -121,16 +126,19 @@ public class PieceUI : MonoBehaviour
         this.jumpEndTime = this.jumpStartTime + this.jumpTime;
     }
 
+    // Signal to PlayerControl that this piece was clicked and let it process
     private void OnMouseDown()
     {
         this.playerControl.ProcessClick(this.gameObject);
     }
 
+    // Determines how to proceed with animation if a trigger enters the collision box
     private void OnTriggerEnter(Collider other)
     {
         // Assume only capstone is trigger
         if (this.type == PieceType.BLOCKER)
         {
+            // Instantiate a Stone in place of the current Standing Stone
             Vector3 stonePos = this.transform.position + .5f * (ui.GetPieceHeight(ui.stone) - ui.GetPieceHeight(ui.blocker)) * Vector3.up;
             GameObject stone = Instantiate(ui.stone, stonePos, ui.stone.transform.rotation);
             Animator stoneAnimator = stone.GetComponent<Animator>();
@@ -139,11 +147,11 @@ public class PieceUI : MonoBehaviour
             PieceUI stoneData = stone.GetComponent<PieceUI>();
             stoneData.player = this.player;
             stoneData.type = PieceType.STONE;
-            // This is a race condition with the capstone (should win by good margin though)
-            stone.transform.SetParent(this.transform.parent);
+            stone.transform.SetParent(this.transform.parent); // This is a race condition with the capstone (should win by good margin though)
             stone.name = this.name;
             other.isTrigger = false;
 
+            // Create dummy parent for this Standing Stone and turn on animation
             GameObject shell = new("temp");
             shell.transform.position = this.transform.position;
             this.transform.SetParent(shell.transform);
@@ -152,6 +160,7 @@ public class PieceUI : MonoBehaviour
             // Object destroyed when done
             animator.SetBool("isFlattening", true);
 
+            // Create dummy parent for Capstone and turn on animation
             GameObject shellOther = new("temp");
             shellOther.transform.position = other.gameObject.transform.position;
             other.gameObject.transform.SetParent(shellOther.transform);
