@@ -82,8 +82,3 @@ public static class Utils
         Debug.Log(msg);
     }
 }
-
-public enum Comparisons
-{
-    LT, LTE, E, GTE, GT
-}

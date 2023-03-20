@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -10,7 +9,7 @@ public class GameManager : MonoBehaviour
 
     public static int currentPlayer = 1;
 
-    public static bool gameOver = false;
+    private static bool gameOver = false;
 
     private bool controlsLocked = false;
 
@@ -24,6 +23,23 @@ public class GameManager : MonoBehaviour
 
     }
 
+    public void StartGame()
+    {
+        ui.InitalizeBoard(Settings.dimension);
+        GameObject.Find("Title Camera").SetActive(false);
+        ui.playerText.enabled = true;
+        GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
+        cameraFocus.SetActive(true);
+        GameObject.Find("Canvas/Title Screen").SetActive(false);
+    }
+
+    public void EndGame(int victor)
+    {
+        ui.victoryText.enabled = true;
+        ui.victoryText.text = "Player " + victor + " wins!";
+        controlsLocked = true;
+    }
+
     public void DoMove(Move move)
     {
         if (controlsLocked)
@@ -31,6 +47,17 @@ public class GameManager : MonoBehaviour
             return;
         }
         StartCoroutine(ExecuteMove(move));
+    }
+
+    public void HomeScreen()
+    {
+        GameObject.Find("Canvas/End Screen").SetActive(false);
+        GameObject board = GameObject.Find("Board");
+        Destroy(board);
+        GameObject.Find("Title Camera").SetActive(true);
+        GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
+        cameraFocus.SetActive(true);
+        GameObject.Find("Canvas/Title Screen").SetActive(true);
     }
 
     private IEnumerator ExecuteMove(Move move)
@@ -69,39 +96,11 @@ public class GameManager : MonoBehaviour
         controlsLocked = false;
     }
 
-    public IEnumerator StartCommute(Commute move)
+    private IEnumerator StartCommute(Commute move)
     {
         controlsLocked = true;
         yield return StartCoroutine(ui.DoCommute(move));
         controlsLocked = false;
-    }
-
-    public void StartGame()
-    {
-        ui.InitalizeBoard(Settings.dimension);
-        GameObject.Find("Title Camera").SetActive(false);
-        ui.playerText.enabled = true;
-        GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
-        cameraFocus.SetActive(true);
-        GameObject.Find("Canvas/Title Screen").SetActive(false);
-    }
-
-    public void EndGame(int victor)
-    {
-        ui.victoryText.enabled = true;
-        ui.victoryText.text = "Player " + victor + " wins!";
-        controlsLocked = true;
-    }
-
-    public void HomeScreen()
-    {
-        GameObject.Find("Canvas/End Screen").SetActive(false);
-        GameObject board = GameObject.Find("Board");
-        Destroy(board);
-        GameObject.Find("Title Camera").SetActive(true);
-        GameObject cameraFocus = FindObjectsOfType<PlayerControl>(true)[0].gameObject;
-        cameraFocus.SetActive(true);
-        GameObject.Find("Canvas/Title Screen").SetActive(true);
     }
 
     private void NextPlayer()
@@ -132,7 +131,6 @@ public class GameManager : MonoBehaviour
  * - I locked up the wasd controlls earlier
  * - Animation is still bad; lag after first one
  * - Parent setting for animation must still be bad since I couldn't commute with the right pieces at one point.
- * - Couldnt make 3 jumps to flatten: W-B-Wc _ _ BssS
  */
 
 /*
@@ -140,9 +138,4 @@ public class GameManager : MonoBehaviour
  * - Victory effects (screen, highlight, road animation??)
  * - Textures
  * - Sounds effects
- * - Car drive across path
- * UNDO FUNCTIONALITY
- * - Need to append to move stack for commutes (which involves calculating how many pieces move per jump)
- * - Need to test the undo function and the modified jump function
- * - Don't forget this is all to fix the latest bug!
  */

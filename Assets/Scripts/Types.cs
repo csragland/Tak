@@ -120,14 +120,14 @@ public class PoppingInfo
     public int[] numPieces;
     public bool doesFlatten;
 
-    public PoppingInfo()
-    {
-        this.doesFlatten = false;
-    }
-
     public PoppingInfo(int[] numPieces, bool doesFlatten)
     {
         this.numPieces = numPieces;
         this.doesFlatten = doesFlatten;
     }
+}
+
+public enum Comparisons
+{
+    LT, LTE, E, GTE, GT
 }
