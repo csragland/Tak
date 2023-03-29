@@ -6,7 +6,9 @@ public class Tak
 {
     private List<Piece>[,] board;
 
-    private Stack<(Move, PoppingInfo)> moveStack = new();
+    public Stack<(Move, PoppingInfo)> moveStack = new();
+
+    public Stack<Move> moveBranch = new();
 
     private int[,] numPiecesSpawned = new int[,] { {0, 0}, {0, 0} };
 
@@ -32,7 +34,6 @@ public class Tak
         if (move.GetType() == typeof(Placement))
         {
             this.DoPlacement((Placement)move);
-            this.moveStack.Push((move, null));
         }
         if (move.GetType() == typeof(Commute))
         {
@@ -44,13 +45,19 @@ public class Tak
     public void UndoMove()
     {
         (Move, PoppingInfo) previous = moveStack.Pop();
-        if (previous.Item1.GetType() == typeof(Placement))
+        UndoMove(previous);
+    }
+
+    public void UndoMove((Move, PoppingInfo) move)
+    {
+        moveBranch.Push(move.Item1);
+        if (move.Item1.GetType() == typeof(Placement))
         {
-            this.UndoPlacement(previous);
+            this.UndoPlacement(move);
         }
-        if (previous.Item1.GetType() == typeof(Commute))
+        if (move.Item1.GetType() == typeof(Commute))
         {
-            this.UndoCommute(((Commute, PoppingInfo))previous);
+            this.UndoCommute(((Commute, PoppingInfo))move);
         }
         this.turnNum -= 1;
     }
@@ -92,6 +99,7 @@ public class Tak
         this.board[move.destination.row, move.destination.col].Add(piece);
         int pieceIndex = move.piece == PieceType.CAPSTONE ? 1 : 0;
         this.numPiecesSpawned[move.player - 1, pieceIndex] += 1;
+        this.moveStack.Push((move, null));
     }
 
     private void UndoPlacement((Move, PoppingInfo) placementData)

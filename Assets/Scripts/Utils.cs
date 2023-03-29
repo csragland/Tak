@@ -28,6 +28,34 @@ public static class Utils
         return GameObject.Find("Board/Tile_" + tileNum);
     }
 
+    public static GameObject GetUIPiece(Tile tile, int stackIndex)
+    {
+        GameObject boardTile = GetUITile(tile);
+        return boardTile.transform.GetChild(stackIndex).gameObject;
+    }
+
+    public static GameObject GetUIPiece(Tile tile)
+    {
+        GameObject boardTile = GetUITile(tile);
+        return boardTile.transform.GetChild(boardTile.transform.childCount - 1).gameObject;
+    }
+
+    public static GameObject GetUICrown(Tile tile)
+    {
+        GameObject uiTile = GetUITile(tile);
+        return GetUICrown(uiTile);
+    }
+
+    public static GameObject GetUICrown(GameObject tile)
+    {
+        int numChildren = tile.transform.childCount;
+        if (tile.transform.childCount > 0)
+        {
+            return tile.transform.GetChild(numChildren - 1).gameObject;
+        }
+        return null;
+    }
+
     public static bool IsOnHorizontalEdge(int tileNum, int dim)
     {
         return tileNum % dim == 0 || tileNum % dim == dim - 1;

@@ -51,6 +51,28 @@ public class GameManager : MonoBehaviour
         StartCoroutine(ExecuteMove(move));
     }
 
+    public void UndoMove()
+    {
+        (Move, PoppingInfo) previous = tak.moveStack.Pop();
+        if (previous.Item1.GetType() == typeof(Placement))
+        {
+            //(Placement, PoppingInfo) specificPrevious = ((Placement)previous.Item1, previous.Item2);
+            StartCoroutine(ui.UndoPlacement(((Placement, PoppingInfo))previous));
+        }
+        if (previous.Item1.GetType() == typeof(Commute))
+        {
+            ui.UndoCommute(((Commute, PoppingInfo))previous);
+        }
+        tak.UndoMove(previous);
+        NextPlayer();
+    }
+
+    public void RedoMove()
+    {
+        Move move = tak.moveBranch.Pop();
+        DoMove(move);
+    }
+
     // Change from game view to home screen
     public void HomeScreen()
     {

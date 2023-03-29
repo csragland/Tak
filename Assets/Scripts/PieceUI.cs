@@ -110,7 +110,14 @@ public class PieceUI : MonoBehaviour
     public void SetSpawn(Vector3 destination)
     {
         this.isBeingSpawned = true;
+        this.origin = transform.position;
         this.destination = destination;
+    }
+
+    public void SetSpawn(Vector3 destination, float spawnTime)
+    {
+        this.spawnTime = spawnTime;
+        this.SetSpawn(destination);
     }
 
     // Set variables to determine path of this piece per determistic physics

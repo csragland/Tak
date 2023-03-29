@@ -195,6 +195,16 @@ public class PlayerControl : MonoBehaviour
         {
             move = this.BuildCommute(Utils.NumToTile(this.currentTileId));
         }
+        else if (e.keyCode == KeyCode.Z && gameManager.tak.moveStack.Count > 0)
+        {
+            gameManager.UndoMove();
+            return;
+        }
+        else if (e.keyCode == KeyCode.X && gameManager.tak.moveBranch.Count > 0)
+        {
+            gameManager.RedoMove();
+            return;
+        }
         else
         {
             return;
@@ -458,12 +468,9 @@ public class PlayerControl : MonoBehaviour
     // Checks if the crown of a stack is owned by the current player or not
     private bool IsPlayerContolled(GameObject tile)
     {
-        int numChildren = tile.transform.childCount;
-        if (tile.transform.childCount > 0)
-        {
-            GameObject crown = tile.transform.GetChild(numChildren - 1).gameObject;
-            this.transform.position = crown.transform.position;
-            return crown.GetComponent<PieceUI>().player == GameManager.currentPlayer;
+        GameObject crown = Utils.GetUICrown(tile);
+        if (crown is not null && crown.GetComponent<PieceUI>().player == GameManager.currentPlayer) {
+            return true;
         }
         return false;
     }
