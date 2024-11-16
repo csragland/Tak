@@ -135,6 +135,11 @@ public class GameManager : MonoBehaviour
  * - I locked up the wasd controlls earlier
  * - Animation is still bad; lag after first one
  * - Parent setting for animation must still be bad since I couldn't commute with the right pieces at one point.
+ * - Can start commute with distance more tiles away than number of jumps
+ * - Game thinks I win if I move capstone from tile to take control of different tile
+ * - Undo commute put tiles on multiple previous tiles
+ * - Undo just bad altogether
+ * - Scenario: black Capstone jumps off 4-connected segment to vacate tile 4 and usurp tile 5. Somehow it is still black's turn, and it is declared that black has won when black places a tile anywhere on the board (while out of turn)
  */
 
 /*

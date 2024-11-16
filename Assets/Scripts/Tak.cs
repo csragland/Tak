@@ -12,7 +12,7 @@ public class Tak
 
     private int[,] numPiecesSpawned = new int[,] { {0, 0}, {0, 0} };
 
-    private readonly int[] maxNumPieces = new int[] { 17, 1 };
+    private static readonly int[] maxNumPieces = new int[] { 21, 1 };
 
     public int turnNum = 1;
     
